@@ -1,0 +1,15 @@
+{
+  "name": "web-redux-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier --write ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "prettier": "^2.4.1"
+  }
+}
