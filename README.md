@@ -58,6 +58,7 @@ This is importance, because we cannot use multiple fine-grain useSelectors in th
 - Setup authentication with JWT
 
 ## Credit
+
 web-redux is inspired from [redux](https://redux.js.org) and [livestate](https://www.livestate.io)
 
 ## License
