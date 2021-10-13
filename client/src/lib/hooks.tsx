@@ -1,8 +1,15 @@
 import { SelectorKey, Selector, SocketMessageType, RootAction } from 'common'
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useMemo, useState } from 'react'
 import { createStoreClient, StoreClient } from './store'
 
-export let StoreContext = createContext<StoreClient | null>(null)
+export const StoreContext = createContext<StoreClient | null>(null)
+
+export function StoreProvider(props: { url: string; children: JSX.Element }) {
+  const { url, children } = props
+  const store = useMemo(() => createStoreClient(new WebSocket(url)), [url])
+  useEffect(() => () => store.close(), [store])
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
+}
 
 enum Status {
   loading,

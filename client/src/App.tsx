@@ -1,23 +1,13 @@
-import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import './App.css'
-import { createStoreClient, StoreClient } from './lib/store'
-import { connect, StoreContext } from './lib/hooks'
+import React, { FormEvent } from 'react'
+import { connect, StoreProvider } from './lib/hooks'
 import { ActionType, ID, RootAction } from 'common'
+import './App.css'
 
 export function Index() {
-  let store = useMemo(() => {
-    let socket = new WebSocket('ws://localhost:8100')
-    return createStoreClient(socket)
-  }, [])
-  useEffect(() => {
-    return () => {
-      store.close()
-    }
-  }, [store])
   return (
-    <StoreContext.Provider value={store}>
+    <StoreProvider url="ws://localhost:8100">
       <App />
-    </StoreContext.Provider>
+    </StoreProvider>
   )
 }
 
