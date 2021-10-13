@@ -11,6 +11,20 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 - Auto push realtime updates to multiple clients
 - Align with [event sourcing architecture and CQRS pattern](https://cqrs-documents.surge.sh)
 
+## File Structure
+
+```
++-- common
+   \-- state.ts
+   \-- selector.ts
+   \-- action.ts
++-- server
+   \-- reducer.ts
+   \-- server.ts (websocket server)
++-- client
+   \-- components (use selector and dispatch action)
+```
+
 ## Data Flow
 
 1. server run reducer to load initial state
