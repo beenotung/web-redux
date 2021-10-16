@@ -9,6 +9,8 @@ import {
 
 export type StoreClient = ReturnType<typeof createStoreClient>
 
+export type Unsubscribe = () => void
+
 export function createStoreClient(socket: WebSocket) {
   let nextID = 1
 
@@ -56,7 +58,7 @@ export function createStoreClient(socket: WebSocket) {
   function subscribe<Key extends SelectorKey>(
     key: Key,
     state_listener: (subState: ReturnType<Selector<Key>>) => void,
-  ) {
+  ): Unsubscribe {
     const id = nextID
     nextID++
 

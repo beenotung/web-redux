@@ -1,7 +1,7 @@
 import express from 'express'
 import { print } from 'listening-on'
 import { rootReducer } from './reducer'
-import { createStoreServer, SelectorType } from './store'
+import { createStoreServer, SelectorType, Unsubscribe } from './store'
 import ws from 'typestub-ws'
 import http from 'http'
 import {
@@ -20,10 +20,10 @@ let server = new http.Server(app)
 let wss = new ws.WebSocketServer({ server })
 
 wss.on('connection', (ws) => {
-  const active_selector_dict: Record<ID, SelectorType<RootState>> = {}
+  const active_selector_dict: Record<ID, Unsubscribe> = {}
   ws.on('close', () => {
-    Object.entries(active_selector_dict).forEach(([id, selector]) => {
-      store.unsubscribe(selector)
+    Object.entries(active_selector_dict).forEach(([id, unsubscribe]) => {
+      unsubscribe()
       delete active_selector_dict[id]
     })
   })
@@ -48,14 +48,14 @@ wss.on('connection', (ws) => {
             ws.send(JSON.stringify(message))
           },
         }
-        store.subscribe(selector)
-        active_selector_dict[id] = selector
+        active_selector_dict[id] = store.subscribe(selector)
         return
       }
       case SocketMessageType.unsubscribe: {
-        let selector = active_selector_dict[message.id]
-        if (selector) {
-          store.unsubscribe(selector)
+        let unsubscribe = active_selector_dict[message.id]
+        if (unsubscribe) {
+          unsubscribe()
+          delete active_selector_dict[message.id]
         }
         return
       }

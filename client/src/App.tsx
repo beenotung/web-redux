@@ -1,7 +1,8 @@
 import React, { FormEvent } from 'react'
-import { connect, StoreProvider } from './lib/hooks'
+import { connect, StoreProvider, useDispatch, useSelector } from './lib/hooks'
 import { ActionType, ID, RootAction } from 'common'
 import './App.css'
+import { SelectorKey } from 'common'
 
 export function Index() {
   return (
@@ -24,21 +25,20 @@ function App() {
           Learn More
         </a>
 
-        <ConnectedUserList />
+        <UserList />
       </header>
     </div>
   )
 }
 
-function UserList(props: {
-  state: { id: ID; username: string }[]
-  dispatch: (action: RootAction) => void
-}) {
-  let user_list = props.state
+function UserList() {
+  const userListSelector = useSelector<SelectorKey>('user_list')
+  const dispatch = useDispatch()
+
   function submit(ev: FormEvent) {
     ev.preventDefault()
     let form = ev.target as HTMLFormElement
-    props.dispatch({
+    dispatch({
       type: ActionType.sign_up,
       username: form.username.value,
       password: form.password.value,
@@ -63,12 +63,18 @@ function UserList(props: {
       </form>
 
       <h3>Existing List</h3>
-      <p>Count: {user_list.length}</p>
-      {user_list.map((user) => (
-        <div key={user.id}>
-          #{user.id} {user.username}
-        </div>
-      ))}
+      {userListSelector.isLoading ? (
+        <p>Loading User List...</p>
+      ) : (
+        <>
+          <p>Count: {userListSelector.value.length}</p>
+          {userListSelector.value.map((user) => (
+            <div key={user.id}>
+              #{user.id} {user.username}
+            </div>
+          ))}
+        </>
+      )}
     </>
   )
 }

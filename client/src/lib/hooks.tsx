@@ -1,5 +1,5 @@
-import { SelectorKey, Selector, SocketMessageType, RootAction } from 'common'
-import { createContext, useEffect, useMemo, useState } from 'react'
+import { SelectorKey, Selector, RootAction } from 'common'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { createStoreClient, StoreClient } from './store'
 
 export const StoreContext = createContext<StoreClient | null>(null)
@@ -11,9 +11,46 @@ export function StoreProvider(props: { url: string; children: JSX.Element }) {
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 
-enum Status {
-  loading,
-  ready,
+export function useStore() {
+  const store = useContext(StoreContext)
+
+  if (!store) {
+    throw new ReferenceError(
+      'Store is not defined in context. You should wrap the component inside <StoreContext.Provider value={store}>',
+    )
+  }
+
+  return store
+}
+
+export function useDispatch() {
+  const store = useStore()
+  return store.dispatch
+}
+
+export function useSelector<Key extends SelectorKey>(selector: Key) {
+  const store = useStore()
+
+  type Value = ReturnType<Selector<Key>>
+  type State =
+    | {
+        isLoading: true
+      }
+    | {
+        isLoading: false
+        value: Value
+      }
+  const [state, setState] = useState<State>({ isLoading: true })
+
+  useEffect(
+    () =>
+      store.subscribe(selector, (value: Value) =>
+        setState({ isLoading: false, value }),
+      ),
+    [selector, store],
+  )
+
+  return state
 }
 
 export function connect<Key extends SelectorKey>(props: {
@@ -25,61 +62,25 @@ export function connect<Key extends SelectorKey>(props: {
     dispatch: (action: RootAction) => void
   }) => JSX.Element
 }) {
-  return () => (
-    <StoreContext.Consumer>
-      {(store) => {
-        if (!store) {
-          throw new ReferenceError(
-            'store client is not defined. You should wrap the component inside <StoreContext.Provider value={store}>',
-          )
-        }
-        return <Connected store={store} {...props} />
-      }}
-    </StoreContext.Consumer>
-  )
-}
+  return () => {
+    const store = useStore()
+    const state = useSelector<Key>(props.selector)
 
-export function Connected<Key extends SelectorKey>(props: {
-  store: StoreClient
-  selector: Key
-  renderLoading: () => JSX.Element
-  render: (props: {
-    state: ReturnType<Selector<Key>>
-    store: StoreClient
-    dispatch: (action: RootAction) => void
-  }) => JSX.Element
-}) {
-  type SubState = ReturnType<Selector<Key>>
+    let Loading = props.renderLoading
+    let Content = props.render
 
-  type State =
-    | {
-        status: Status.loading
-      }
-    | {
-        status: Status.ready
-        subState: SubState
-      }
-
-  const key = props.selector
-  const store = props.store
-  const { subscribe, dispatch } = store
-
-  const [state, setState] = useState<State>({ status: Status.loading })
-
-  useEffect(() => {
-    let state_listener = (subState: SubState) =>
-      setState({ status: Status.ready, subState })
-    let unsubscribe = subscribe(key, state_listener)
-    return unsubscribe
-  }, [key, subscribe])
-
-  if (state.status === Status.loading) {
-    const Component = props.renderLoading
-    return <Component />
-  } else {
-    const Component = props.render
     return (
-      <Component state={state.subState} store={store} dispatch={dispatch} />
+      <>
+        {state.isLoading ? (
+          <Loading />
+        ) : (
+          <Content
+            state={state.value}
+            store={store}
+            dispatch={store.dispatch}
+          />
+        )}
+      </>
     )
   }
 }

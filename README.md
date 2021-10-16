@@ -49,9 +49,9 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 
 ---
 
-- Enhance selector sub-state update detection for object and array / allow to combine multiple selector into object or array
+- Support async selector
 
-This is importance, because we cannot use multiple fine-grain useSelectors in the same component like react-redux due to suspense API pattern adopted in this implementation
+Current approach require the server to store the state in sync storage (e.g. memory, lmdb, fs, better-sqlite3)
 
 ---
 

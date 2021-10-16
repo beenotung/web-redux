@@ -5,17 +5,25 @@ export type SelectorType<State, SubState = unknown> = {
   receive_state: (sub_state: SubState) => void
 }
 
+export type Unsubscribe = () => void
+
 export function createStoreServer<State, Action>(
   reducer: (state: State | undefined, action: Action) => State,
 ) {
   let state = reducer(undefined, initialAction)
   type Selector<SubState> = SelectorType<State, SubState>
+  // Selector<SubState> -> SubState
   let selector_map = new Map<Selector<any>, any>()
   function getState(): State {
     return state
   }
+  function replaceReducer(newReducer: typeof reducer) {
+    reducer = newReducer
+  }
   function dispatch(action: Action): void {
-    state = reducer(state, action)
+    let newState = reducer(state, action)
+    if (newState === state) return
+    state = newState
     selector_map.forEach((old_sub_state, selector) => {
       let new_sub_state = selector.map_state(state)
       if (new_sub_state !== old_sub_state) {
@@ -24,18 +32,22 @@ export function createStoreServer<State, Action>(
       }
     })
   }
-  function subscribe<SubState>(selector: Selector<SubState>): void {
+  function subscribe<SubState>(selector: Selector<SubState>) {
     let sub_state = selector.map_state(state)
     selector_map.set(selector, sub_state)
     selector.receive_state(sub_state)
+
+    function unsubscribe(): void {
+      selector_map.delete(selector)
+    }
+
+    return unsubscribe
   }
-  function unsubscribe(selector: Selector<any>): void {
-    selector_map.delete(selector)
-  }
+
   return {
     getState,
+    replaceReducer,
     dispatch,
     subscribe,
-    unsubscribe,
   }
 }
