@@ -20,8 +20,11 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 ### Library Packages
 
 - [web-redux-core](./lib/web-redux-core)
+[![npm Package Version](https://img.shields.io/npm/v/web-redux-core.svg?maxAge=3600)](https://www.npmjs.com/package/web-redux-core)
 - [web-redux-client](./lib/web-redux-client)
+[![npm Package Version](https://img.shields.io/npm/v/web-redux-client.svg?maxAge=3600)](https://www.npmjs.com/package/web-redux-client)
 - [web-redux-server](./lib/web-redux-server)
+[![npm Package Version](https://img.shields.io/npm/v/web-redux-server.svg?maxAge=3600)](https://www.npmjs.com/package/web-redux-server)
 
 ### Example Modules
 
