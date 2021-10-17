@@ -16,8 +16,17 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 
 ## File Structure
 
-### lib
+### Library Packages
+
 - [web-redux-core](./lib/web-redux-core)
+- [web-redux-client](./lib/web-redux-client)
+- [web-redux-server](./lib/web-redux-server)
+
+### Example Modules
+
+- [example-server](./example/server)
+- [example-react-app](./example/react-app)
+- [example-common](./example/common)
 
 ```
 +-- common
