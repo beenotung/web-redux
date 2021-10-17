@@ -11,11 +11,4 @@ export let selector_dict = {
   },
 }
 
-export type SelectorKey = keyof typeof selector_dict
-
-export type Selector<Key extends SelectorKey = SelectorKey> =
-  typeof selector_dict[Key]
-
-export type SelectorState<Key extends SelectorKey = SelectorKey> = ReturnType<
-  Selector<Key>
->
+export type RootSelectorDict = typeof selector_dict

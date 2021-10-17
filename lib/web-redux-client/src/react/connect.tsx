@@ -1,25 +1,36 @@
-import { SelectorKey, RootDispatch, SelectorState } from 'common'
 import { useStore, useSelector, useDispatch, useSelectorObject } from './hooks'
-import { StoreClient } from './store'
+import { StoreClient } from '../store-client'
+import {
+  Action,
+  Dispatch,
+  SelectorDict,
+  SelectorKey,
+  SelectorState,
+} from '../../../web-redux/src/types'
 
 export type MapStateToProps<
+  RootSelectorDict extends SelectorDict<any, any, any>,
+  SelectorKey extends keyof RootSelectorDict,
   Field extends string,
-  Key extends SelectorKey,
-> = () => Record<Field, Key>
+> = () => Record<Field, SelectorKey>
 
-export type MapDispatchToProps<Field extends string> = () => Record<
-  Field,
-  (dispatch: RootDispatch) => void
->
+export type MapDispatchToProps<
+  RootAction extends Action,
+  Field extends string,
+> = () => Record<Field, (dispatch: Dispatch<RootAction>) => void>
 
 export function connect<
-  Key extends SelectorKey,
+  RootSelectorDict extends SelectorDict<any, any, any>,
+  Key extends SelectorKey<RootSelectorDict>,
+  RootAction extends Action,
   StateField extends string,
   ActionField extends string,
 >(
-  mapStateToProps?: MapStateToProps<StateField, Key>,
-  mapDispatchToProps?: MapDispatchToProps<ActionField>,
-) {
+  mapStateToProps?: MapStateToProps<RootSelectorDict, Key, StateField>,
+  mapDispatchToProps?: MapDispatchToProps<RootAction, ActionField>,
+): <Props, State>(
+  Component: React.ComponentClass<Props, State>,
+) => (props: Omit<Props, StateField | ActionField>) => JSX.Element {
   return function <Props, State>(
     Component: React.ComponentClass<Props, State>,
   ) {
@@ -43,18 +54,22 @@ export function connect<
   }
 }
 
-export function connectSuspend<Key extends SelectorKey>(props: {
+export function connectSuspend<
+  RootSelectorDict extends SelectorDict<any, any, any>,
+  Key extends string & SelectorKey<RootSelectorDict>,
+  RootAction extends Action,
+>(props: {
   selector: Key
   renderLoading: () => JSX.Element
   render: (props: {
-    value: SelectorState<Key>
-    store: StoreClient
-    dispatch: RootDispatch
+    value: SelectorState<RootSelectorDict, Key>
+    store: StoreClient<RootSelectorDict, RootAction>
+    dispatch: Dispatch<RootAction>
   }) => JSX.Element
 }) {
   return () => {
-    const store = useStore()
-    const state = useSelector<Key>(props.selector)
+    const store = useStore<RootSelectorDict, RootAction>()
+    const state = useSelector<RootSelectorDict, Key>(props.selector)
 
     let Loading = props.renderLoading
     let Content = props.render

@@ -1,4 +1,5 @@
 import { ID } from './state'
+import type { Dispatch } from 'web-redux-client'
 
 export enum ActionType {
   sign_up,
@@ -26,4 +27,4 @@ export type ChangeUsernameAction = {
 
 export type RootAction = SignUpAction | LoginAction | ChangeUsernameAction
 
-export type RootDispatch = (action: RootAction) => void
+export type RootDispatch = Dispatch<RootAction>

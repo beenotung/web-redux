@@ -1,4 +1,4 @@
-import { SocketMessage } from 'common'
+import { SocketMessage } from 'web-redux'
 
 function noop() {
   // to disable debug log
@@ -26,7 +26,7 @@ const defaultOptions: Omit<Required<SocketOptions>, 'url'> = {
   reconnectIntervalVariant: 0.3,
 }
 
-export class Socket {
+export class SocketClient {
   static readonly NORMAL_CLOSURE = 1000
   static readonly ABNORMAL_CLOSURE = 1006
 
@@ -66,7 +66,7 @@ export class Socket {
       this.outgoingBuffer = []
     })
     this.addEventListener('close', (ev) => {
-      if (!this.isClosed && ev.code === Socket.ABNORMAL_CLOSURE) {
+      if (!this.isClosed && ev.code === SocketClient.ABNORMAL_CLOSURE) {
         this.reconnect()
       }
     })

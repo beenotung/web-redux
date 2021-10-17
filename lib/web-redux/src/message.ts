@@ -1,6 +1,4 @@
-import { RootAction } from './action'
-import { SelectorKey } from './selector'
-import { ID } from './state'
+import { Action, ID, Key } from './types'
 
 export enum SocketMessageType {
   dispatch,
@@ -12,13 +10,13 @@ export enum SocketMessageType {
 /* client or storage to server */
 export type DispatchMessage = {
   type: SocketMessageType.dispatch
-  action: RootAction
+  action: Action
 }
 
 /* client to server */
 export type SubscribeMessage = {
   type: SocketMessageType.subscribe
-  key: SelectorKey
+  key: Key
   id: ID
 }
 

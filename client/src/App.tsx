@@ -4,9 +4,10 @@ import {
   useDispatch,
   useSelector,
   SuspendState,
-} from './lib/hooks'
-import { ActionType } from 'common'
-import { connect, connectSuspend } from './lib/connect'
+  connect,
+  connectSuspend,
+} from 'web-redux-client/dist/react'
+import { ActionType, RootAction, RootSelectorDict } from 'common'
 import './App.css'
 
 export function Index() {
@@ -38,7 +39,7 @@ function App() {
 }
 
 function UserPage() {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<RootAction>()
 
   function submit(ev: FormEvent) {
     ev.preventDefault()
@@ -75,7 +76,9 @@ function UserPage() {
 }
 
 function UserList() {
-  const userListSelector = useSelector('user_list')
+  const userListSelector = useSelector<RootSelectorDict, 'user_list'>(
+    'user_list',
+  )
   return (
     <>
       {userListSelector.isLoading === true ? (
@@ -94,7 +97,7 @@ function UserList() {
 }
 
 class UserCount extends React.Component<{
-  count: SuspendState<'user_count'>
+  count: SuspendState<RootSelectorDict, 'user_count'>
 }> {
   render() {
     return (
