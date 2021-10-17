@@ -25,3 +25,5 @@ export type ChangeUsernameAction = {
 }
 
 export type RootAction = SignUpAction | LoginAction | ChangeUsernameAction
+
+export type RootDispatch = (action: RootAction) => void

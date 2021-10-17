@@ -1,12 +1,17 @@
 import React, { FormEvent } from 'react'
-import { connect, StoreProvider, useDispatch, useSelector } from './lib/hooks'
-import { ActionType, ID, RootAction } from 'common'
+import {
+  StoreProvider,
+  useDispatch,
+  useSelector,
+  SuspendState,
+} from './lib/hooks'
+import { ActionType } from 'common'
+import { connect, connectSuspend } from './lib/connect'
 import './App.css'
-import { SelectorKey } from 'common'
 
 export function Index() {
   return (
-    <StoreProvider url="ws://localhost:8100">
+    <StoreProvider url="ws://localhost:8100" debug>
       <App />
     </StoreProvider>
   )
@@ -21,18 +26,18 @@ function App() {
           className="App-link"
           href="https://github.com/beenotung/web-redux-template"
           target="_blank"
+          rel="noreferrer"
         >
           Learn More
         </a>
 
-        <UserList />
+        <UserPage />
       </header>
     </div>
   )
 }
 
-function UserList() {
-  const userListSelector = useSelector<SelectorKey>('user_list')
+function UserPage() {
   const dispatch = useDispatch()
 
   function submit(ev: FormEvent) {
@@ -63,11 +68,20 @@ function UserList() {
       </form>
 
       <h3>Existing List</h3>
-      {userListSelector.isLoading ? (
+      <ConnectedUserCount />
+      <UserList />
+    </>
+  )
+}
+
+function UserList() {
+  const userListSelector = useSelector('user_list')
+  return (
+    <>
+      {userListSelector.isLoading === true ? (
         <p>Loading User List...</p>
       ) : (
         <>
-          <p>Count: {userListSelector.value.length}</p>
           {userListSelector.value.map((user) => (
             <div key={user.id}>
               #{user.id} {user.username}
@@ -79,7 +93,21 @@ function UserList() {
   )
 }
 
-export const ConnectedUserList = connect({
+class UserCount extends React.Component<{
+  count: SuspendState<'user_count'>
+}> {
+  render() {
+    return (
+      <p>
+        Count: {this.props.count.isLoading ? 'loading' : this.props.count.value}
+      </p>
+    )
+  }
+}
+const mapStateToProps = () => ({ count: 'user_count' as const })
+const ConnectedUserCount = connect(mapStateToProps)(UserCount)
+
+export const ConnectedUserList = connectSuspend({
   selector: 'user_list',
   renderLoading: () => <p>Loading user list ...</p>,
   render: UserList,

@@ -10,6 +10,9 @@ Store state and run reducer on the server, push sub-state to client in realtime.
   - enforce access control
 - Auto push realtime updates to multiple clients
 - Align with [event sourcing architecture and CQRS pattern](https://cqrs-documents.surge.sh)
+- Reliable message channel
+  - Websocket auto reconnect when network resume
+  - Subscription message is buffered and auto resent when network resume
 
 ## File Structure
 
@@ -45,7 +48,6 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 
 ---
 
-- Enhance web socket setting to auto reconnect when network is recovered
 
 ---
 

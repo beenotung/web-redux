@@ -1,12 +1,20 @@
-import { SelectorKey, Selector, RootAction } from 'common'
+import { SelectorKey, SelectorState } from 'common'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { createStoreClient, StoreClient } from './store'
+import { Socket } from './socket'
+import { createStoreClient, StoreClient, Unsubscribe } from './store'
 
 export const StoreContext = createContext<StoreClient | null>(null)
 
-export function StoreProvider(props: { url: string; children: JSX.Element }) {
-  const { url, children } = props
-  const store = useMemo(() => createStoreClient(new WebSocket(url)), [url])
+export function StoreProvider(props: {
+  url: string
+  children: JSX.Element
+  debug?: boolean
+}) {
+  const { url, children, debug } = props
+  const store = useMemo(
+    () => createStoreClient(new Socket({ url, debug })),
+    [url, debug],
+  )
   useEffect(() => () => store.close(), [store])
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
@@ -28,23 +36,23 @@ export function useDispatch() {
   return store.dispatch
 }
 
+export type SuspendState<Key extends SelectorKey = SelectorKey> =
+  | {
+      isLoading: true
+    }
+  | {
+      isLoading: false
+      value: SelectorState<Key>
+    }
+
 export function useSelector<Key extends SelectorKey>(selector: Key) {
   const store = useStore()
 
-  type Value = ReturnType<Selector<Key>>
-  type State =
-    | {
-        isLoading: true
-      }
-    | {
-        isLoading: false
-        value: Value
-      }
-  const [state, setState] = useState<State>({ isLoading: true })
+  const [state, setState] = useState<SuspendState<Key>>({ isLoading: true })
 
   useEffect(
     () =>
-      store.subscribe(selector, (value: Value) =>
+      store.subscribe(selector, (value: SelectorState<Key>) =>
         setState({ isLoading: false, value }),
       ),
     [selector, store],
@@ -53,34 +61,30 @@ export function useSelector<Key extends SelectorKey>(selector: Key) {
   return state
 }
 
-export function connect<Key extends SelectorKey>(props: {
-  selector: Key
-  renderLoading: () => JSX.Element
-  render: (props: {
-    state: ReturnType<Selector<Key>>
-    store: StoreClient
-    dispatch: (action: RootAction) => void
-  }) => JSX.Element
-}) {
-  return () => {
-    const store = useStore()
-    const state = useSelector<Key>(props.selector)
+export function useSelectorObject<Key extends SelectorKey, K extends string>(
+  selectorObject: Record<K, Key>,
+) {
+  const store = useStore()
 
-    let Loading = props.renderLoading
-    let Content = props.render
+  const [state, setState] = useState<Record<K, SuspendState<Key>>>(() => {
+    let state = {} as Record<K, SuspendState<Key>>
+    for (let key in selectorObject) {
+      state[key] = { isLoading: true }
+    }
+    return state
+  })
 
-    return (
-      <>
-        {state.isLoading ? (
-          <Loading />
-        ) : (
-          <Content
-            state={state.value}
-            store={store}
-            dispatch={store.dispatch}
-          />
-        )}
-      </>
-    )
-  }
+  useEffect(() => {
+    let unsubscribeList: Unsubscribe[] = []
+    for (let key in selectorObject) {
+      let selector = selectorObject[key]
+      let unsubscribe = store.subscribe(selector, (value: SelectorState<Key>) =>
+        setState((state) => ({ ...state, [key]: { isLoading: false, value } })),
+      )
+      unsubscribeList.push(unsubscribe)
+    }
+    return () => unsubscribeList.forEach((unsubscribe) => unsubscribe())
+  }, [selectorObject, store])
+
+  return state
 }

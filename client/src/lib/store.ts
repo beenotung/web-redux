@@ -1,7 +1,8 @@
+import { Socket } from './socket'
+import { SelectorState } from 'common'
 import {
   ID,
   RootAction,
-  Selector,
   SelectorKey,
   SocketMessage,
   SocketMessageType,
@@ -11,17 +12,35 @@ export type StoreClient = ReturnType<typeof createStoreClient>
 
 export type Unsubscribe = () => void
 
-export function createStoreClient(socket: WebSocket) {
+type Subscription = {
+  key: SelectorKey
+  state_listener: (subState: SelectorState<SelectorKey>) => void
+}
+
+export function createStoreClient(socket: Socket) {
   let nextID = 1
 
-  const state_listener_dict: Record<ID, (sub_state: any) => void> = {}
+  const subscription_dict: Record<ID, Subscription> = {}
+
+  socket.addEventListener('reconnect', () => {
+    console.debug('store reconnect')
+    Object.entries(subscription_dict).forEach(([id, subscription]) => {
+      socket.sendMessage({
+        type: SocketMessageType.subscribe,
+        key: subscription.key,
+        id,
+      })
+    })
+  })
 
   socket.addEventListener('message', (ev) => {
     let message: SocketMessage = JSON.parse(String(ev.data))
     switch (message.type) {
       case SocketMessageType.update: {
-        let listener = state_listener_dict[message.id]
-        listener?.(message.state)
+        let subscription = subscription_dict[message.id]
+        subscription?.state_listener(
+          message.state as SelectorState<SelectorKey>,
+        )
         return
       }
       default:
@@ -29,27 +48,8 @@ export function createStoreClient(socket: WebSocket) {
     }
   })
 
-  let messageBuffer: string[] = []
-
-  socket.addEventListener('open', () => {
-    if (messageBuffer.length === 0) return
-    debug('flush socket message buffer:', messageBuffer)
-    messageBuffer.forEach((msg) => socket.send(msg))
-    messageBuffer = []
-  })
-
-  function sendMessage(message: SocketMessage) {
-    let msg = JSON.stringify(message)
-    if (socket.readyState === socket.OPEN) {
-      socket.send(msg)
-    } else {
-      debug('socket not ready, save pending message to buffer:', message)
-      messageBuffer.push(msg)
-    }
-  }
-
   function dispatch(action: RootAction): void {
-    sendMessage({
+    socket.sendMessage({
       type: SocketMessageType.dispatch,
       action,
     })
@@ -57,22 +57,27 @@ export function createStoreClient(socket: WebSocket) {
 
   function subscribe<Key extends SelectorKey>(
     key: Key,
-    state_listener: (subState: ReturnType<Selector<Key>>) => void,
+    state_listener: (subState: SelectorState<Key>) => void,
   ): Unsubscribe {
     const id = nextID
     nextID++
 
-    state_listener_dict[id] = state_listener
+    subscription_dict[id] = {
+      key,
+      state_listener: state_listener as (
+        state: SelectorState<SelectorKey>,
+      ) => void,
+    }
 
-    sendMessage({
+    socket.sendMessage({
       type: SocketMessageType.subscribe,
       key,
       id,
     })
 
     function unsubscribe() {
-      delete state_listener_dict[id]
-      sendMessage({
+      delete subscription_dict[id]
+      socket.sendMessage({
         type: SocketMessageType.unsubscribe,
         id,
       })
@@ -82,9 +87,11 @@ export function createStoreClient(socket: WebSocket) {
   }
 
   function close() {
-    socket.close()
-    Object.keys(state_listener_dict).forEach(
-      (key) => delete state_listener_dict[key],
+    let code = Socket.NORMAL_CLOSURE
+    let reason = 'StoreClient closed'
+    socket.close(code, reason)
+    Object.keys(subscription_dict).forEach(
+      (key) => delete subscription_dict[key],
     )
   }
 
@@ -94,8 +101,3 @@ export function createStoreClient(socket: WebSocket) {
     close,
   }
 }
-
-let verbose = false
-let debug = verbose ? console.debug.bind(console) : noop
-
-function noop() {}
