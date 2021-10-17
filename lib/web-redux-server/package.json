@@ -1,12 +1,14 @@
 {
   "name": "web-redux-server",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "The server module of web-redux for redux store and websocket server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsc --watch -p .",
-    "build": "tsc -p .",
+    "build": "npm run clean && npm run tsc",
+    "clean": "rimraf dist",
+    "tsc": "tsc -p .",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -29,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^16.11.1",
+    "rimraf": "^3.0.2",
     "typescript": "^4.4.4",
     "typestub-ws": "^8.2.3"
   },

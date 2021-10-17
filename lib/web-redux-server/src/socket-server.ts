@@ -5,9 +5,9 @@ import {
   SocketMessageType,
   SelectorDict,
   StoreState,
-} from 'web-redux'
-import { SelectorType, StoreServer } from './store-server'
+} from 'web-redux-core'
 import type ws from 'typestub-ws'
+import { SelectorType, StoreServer } from './store-server'
 
 type Unsubscribe = () => void
 

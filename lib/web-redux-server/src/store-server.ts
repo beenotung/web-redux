@@ -1,4 +1,4 @@
-import { Action } from 'web-redux'
+import { Action } from 'web-redux-core'
 
 const initialAction = { type: '@@INIT' } as any
 
