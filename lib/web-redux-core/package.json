@@ -1,6 +1,6 @@
 {
   "name": "web-redux-core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The core module of web-redux for shared types and enums.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

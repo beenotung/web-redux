@@ -4,6 +4,7 @@
     "incremental": true,
     "strict": true,
     "declaration": true,
+    "sourceMap": true,
     "jsx": "react-jsx",
     "outDir": "dist"
   },
