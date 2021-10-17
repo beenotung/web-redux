@@ -6,7 +6,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsc --watch -p .",
-    "build": "tsc -p .",
+    "build": "npm run clean && npm run tsc",
+    "clean": "rimraf dist",
+    "tsc": "tsc -p .",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -25,6 +27,7 @@
   "license": "BSD-2-Clause",
   "devDependencies": {
     "@types/node": "^16.11.1",
+    "rimraf": "^3.0.2",
     "typescript": "^4.4.4"
   },
   "repository": {
