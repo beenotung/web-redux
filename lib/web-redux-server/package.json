@@ -1,18 +1,27 @@
 {
   "name": "web-redux-server",
-  "version": "0.0.0",
-  "description": "",
+  "version": "1.0.0",
+  "description": "The server module of web-redux for redux store and websocket server.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsc --watch -p .",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "web-redux",
+    "redux",
+    "websocket",
+    "ws",
+    "realtime",
+    "state-management",
+    "shared-state"
+  ],
+  "author": "Beeno Tung <aabbcc1241@yahoo.com.hk> (https://beeno-tung.surge.sh)",
+  "license": "BSD-2-Clause",
   "dependencies": {
-    "web-redux": "link:../web-redux"
+    "web-redux-core": "^1.0.1"
   },
   "devDependencies": {
     "@types/node": "^16.11.1",
