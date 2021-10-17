@@ -16,6 +16,9 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 
 ## File Structure
 
+### lib
+- [web-redux-core](./lib/web-redux-core)
+
 ```
 +-- common
    \-- state.ts

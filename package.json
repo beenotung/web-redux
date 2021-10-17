@@ -1,7 +1,7 @@
 {
-  "name": "web-redux-template",
+  "name": "web-redux",
   "version": "1.0.0",
-  "description": "",
+  "description": "Store state and run reducer on the server, push sub-state to client in realtime.",
   "main": "index.js",
   "scripts": {
     "format": "prettier --write ."
@@ -11,5 +11,13 @@
   "license": "BSD-2-Clause",
   "devDependencies": {
     "prettier": "^2.4.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beenotung/web-redux.git"
+  },
+  "bugs": {
+    "url": "https://github.com/beenotung/web-redux/issues"
+  },
+  "homepage": "https://github.com/beenotung/web-redux#readme"
 }
