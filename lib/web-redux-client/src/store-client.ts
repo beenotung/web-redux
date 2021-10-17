@@ -1,5 +1,3 @@
-import { SocketClient } from './socket-client'
-import { SocketMessage, SocketMessageType } from 'web-redux'
 import {
   ID,
   Action,
@@ -7,7 +5,10 @@ import {
   SelectorState,
   SelectorDict,
   Dispatch,
-} from 'web-redux/src/types'
+  SocketMessage,
+  SocketMessageType,
+} from 'web-redux-core'
+import { SocketClient } from './socket-client'
 
 export type StoreClient<
   RootSelectorDict extends SelectorDict<any, any, any>,

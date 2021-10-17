@@ -1,12 +1,12 @@
-import { useStore, useSelector, useDispatch, useSelectorObject } from './hooks'
-import { StoreClient } from '../store-client'
 import {
   Action,
   Dispatch,
   SelectorDict,
   SelectorKey,
   SelectorState,
-} from '../../../web-redux/src/types'
+} from 'web-redux-core'
+import { StoreClient } from '../store-client'
+import { useStore, useSelector, useDispatch, useSelectorObject } from './hooks'
 
 export type MapStateToProps<
   RootSelectorDict extends SelectorDict<any, any, any>,

@@ -1,13 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { SocketClient } from '../socket-client'
-import { createStoreClient, StoreClient, Unsubscribe } from '../store-client'
 import {
   Action,
   Dispatch,
   SelectorDict,
   SelectorKey,
   SelectorState,
-} from 'web-redux'
+} from 'web-redux-core'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { SocketClient } from '../socket-client'
+import { createStoreClient, StoreClient, Unsubscribe } from '../store-client'
 
 export const StoreContext = createContext<StoreClient<any, any> | null>(null)
 

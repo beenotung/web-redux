@@ -1,4 +1,4 @@
-import { SocketMessage } from 'web-redux'
+import { SocketMessage } from 'web-redux-core'
 
 function noop() {
   // to disable debug log
