@@ -1,4 +1,4 @@
-import { RootState } from '.'
+import { RootState } from './state'
 
 export let selector_dict = {
   user_list: (state: RootState) => {

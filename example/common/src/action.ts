@@ -1,5 +1,5 @@
 import { ID } from './state'
-import type { Dispatch } from 'web-redux-client'
+import type { Dispatch } from 'web-redux-core'
 
 export enum ActionType {
   sign_up,

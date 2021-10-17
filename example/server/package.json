@@ -1,10 +1,13 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend module of example application.",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/server.ts"
+    "dev": "ts-node-dev src/server.ts",
+    "build": "npm run clean && npm run tsc",
+    "clean": "rimraf dist",
+    "tsc": "tsc -p ."
   },
   "keywords": [],
   "author": "",
@@ -15,12 +18,12 @@
     "express": "^4.17.1",
     "listening-on": "^2.0.2",
     "typestub-ws": "^8.2.3",
-    "web-redux": "link:../lib/web-redux",
-    "web-redux-server": "link:../lib/web-redux-server"
+    "web-redux-server": "link:../../lib/web-redux-server"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
+    "rimraf": "^3.0.2",
     "ts-node-dev": "^1.1.8",
     "typescript": "^4.4.4"
   }

@@ -1,20 +1,24 @@
 {
   "name": "common",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Shared module of example application.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p .",
-    "dev": "tsc --watch -p ."
+    "dev": "tsc --watch -p .",
+    "build": "npm run clean && npm run tsc",
+    "clean": "rimraf dist",
+    "tsc": "tsc -p ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "rimraf": "^3.0.2",
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "web-redux-client": "link:../lib/web-redux-client"
+    "web-redux-core": "^1.0.1"
   }
 }
