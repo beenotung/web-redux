@@ -1,4 +1,4 @@
-# web-redux-template
+# web-redux
 
 Store state and run reducer on the server, push sub-state to client in realtime.
 
