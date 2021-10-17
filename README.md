@@ -13,6 +13,7 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 - Reliable message channel
   - Websocket auto reconnect when network resume
   - Subscription message is buffered and auto resent when network resume
+- Type-safe checking with Typescript
 
 ## File Structure
 
