@@ -1,6 +1,6 @@
 {
   "name": "web-redux-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The client module of web-redux for browser frontend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -35,5 +35,13 @@
   },
   "dependencies": {
     "web-redux-core": "^1.0.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beenotung/web-redux.git"
+  },
+  "bugs": {
+    "url": "https://github.com/beenotung/web-redux/issues"
+  },
+  "homepage": "https://github.com/beenotung/web-redux/tree/master/lib/web-redux-core#readme"
 }
