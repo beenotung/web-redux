@@ -12,6 +12,7 @@
   "keywords": [
     "web-redux",
     "redux",
+    "react",
     "ssr",
     "realtime",
     "state-management",
