@@ -33,6 +33,7 @@ Store state and run reducer on the server, push sub-state to client in realtime.
    \-- state.ts
    \-- selector.ts
    \-- action.ts
+   \-- index.ts (optional, export other 3 files for easier importing)
 +-- server
    \-- reducer.ts
    \-- server.ts (websocket server)
