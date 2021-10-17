@@ -2,7 +2,7 @@
 
 The core module of web-redux for shared types and enums.
 
-[![npm Package Version](https://img.shields.io/npm/v/web-redux.svg?maxAge=3600)](https://www.npmjs.com/package/web-redux)
+[![npm Package Version](https://img.shields.io/npm/v/web-redux-core.svg?maxAge=3600)](https://www.npmjs.com/package/web-redux-core)
 
 Details refer to [README.md at top level repository](../../README.md)
 
