@@ -1,16 +1,28 @@
 {
   "name": "web-redux-client",
-  "version": "0.0.0",
-  "description": "",
+  "version": "1.0.0",
+  "description": "The client module of web-redux for browser frontend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "dev": "tsc --watch -p .",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "web-redux",
+    "redux",
+    "ssr",
+    "realtime",
+    "state-management",
+    "shared-state"
+  ],
+  "author": {
+    "name": "Beeno Tung",
+    "email": "aabbcc1241@yahoo.com.hk",
+    "url": "https://beeno-tung.surge.sh"
+  },
+  "license": "BSD-2-Clause",
   "peerDependencies": {
     "react": "^17.0.2"
   },
@@ -21,6 +33,6 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "web-redux": "link:../web-redux"
+    "web-redux-core": "^1.0.1"
   }
 }
