@@ -48,9 +48,6 @@ Store state and run reducer on the server, push sub-state to client in realtime.
 
 ---
 
-
----
-
 - Support async selector
 
 Current approach require the server to store the state in sync storage (e.g. memory, lmdb, fs, better-sqlite3)
