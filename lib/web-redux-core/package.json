@@ -1,6 +1,6 @@
 {
   "name": "web-redux-core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The core module of web-redux for shared types and enums.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,5 +26,13 @@
   "devDependencies": {
     "@types/node": "^16.11.1",
     "typescript": "^4.4.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beenotung/web-redux.git"
+  },
+  "bugs": {
+    "url": "https://github.com/beenotung/web-redux/issues"
+  },
+  "homepage": "https://github.com/beenotung/web-redux/tree/master/lib/web-redux-core#readme"
 }
