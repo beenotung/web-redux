@@ -32,12 +32,11 @@
   "devDependencies": {
     "@types/node": "^16.11.0",
     "@types/react": "^17.0.29",
-    "react": "^17.0.2",
     "rimraf": "^3.0.2",
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "web-redux-core": "^1.0.1"
+    "web-redux-core": "file:../web-redux-core"
   },
   "repository": {
     "type": "git",

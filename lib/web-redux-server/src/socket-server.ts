@@ -12,7 +12,7 @@ import { SelectorType, StoreServer } from './store-server'
 type Unsubscribe = () => void
 
 export function attachSocketServer<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   RootAction extends Action,
 >(
   store: StoreServer<StoreState<RootSelectorDict>, RootAction>,
@@ -35,9 +35,13 @@ export function attachSocketServer<
           return
         }
         case SocketMessageType.subscribe: {
+          console.log('subscribe:', {
+            message,
+          })
           let id = message.id
           let map_state = selector_dict[message.key]
           let selector: SelectorType<StoreState<RootSelectorDict>> = {
+            options: message.options,
             map_state,
             receive_state(state: unknown) {
               let message: SocketMessage = {

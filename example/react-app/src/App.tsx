@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react'
+import React, { FormEvent, useMemo } from 'react'
 import {
   StoreProvider,
   useDispatch,
@@ -69,16 +69,24 @@ function UserPage() {
       </form>
 
       <h3>Existing List</h3>
-      <ConnectedUserCount />
+      {/* <ConnectedUserCount /> */}
       <UserList />
     </>
   )
 }
 
 function UserList() {
+  console.log(useSelector)
+  console.log(useSelector.toString())
   const userListSelector = useSelector<RootSelectorDict, 'user_list'>(
     'user_list',
+    useMemo(() => ({ count: 3, offset: 0 }), []),
+    // { count: 3, offset: 0 }
   )
+  // const userListSelector  = {
+  //   isLoading:true,
+  //   value:[] as any[]
+  // }
   return (
     <>
       {userListSelector.isLoading === true ? (
@@ -96,24 +104,35 @@ function UserList() {
   )
 }
 
-class UserCount extends React.Component<{
-  count: SuspendState<RootSelectorDict, 'user_count'>
-}> {
-  render() {
-    return (
-      <p>
-        Count: {this.props.count.isLoading ? 'loading' : this.props.count.value}
-      </p>
-    )
-  }
-}
-const mapStateToProps = () => ({ count: 'user_count' as const })
-const ConnectedUserCount = connect(mapStateToProps)(UserCount)
+// class UserCount extends React.Component<{
+//   count: SuspendState<RootSelectorDict, 'user_count'>
+// }> {
+//   render() {
+//     return (
+//       <p>
+//         {/* Count: {this.props.count.isLoading ? 'loading' : this.props.count.value} */}
+//         c:{JSON.stringify(this.props.count)}
+//       </p>
+//     )
+//   }
+// }
 
-export const ConnectedUserList = connectSuspend({
-  selector: 'user_list',
-  renderLoading: () => <p>Loading user list ...</p>,
-  render: UserList,
-})
+// const ConnectedUserCount = connect({
+//   count: {
+//     selector: 'user_count',
+//     options: {},
+//   },
+// })(UserCount)
+
+// export const ConnectedUserList = connectSuspend<
+//   RootSelectorDict,
+//   'user_list',
+//   RootAction
+// >({
+//   selector: 'user_list',
+//   options: { offset: 0, count: 5 },
+//   renderLoading: () => <p>Loading user list ...</p>,
+//   render: UserList,
+// })
 
 export default Index

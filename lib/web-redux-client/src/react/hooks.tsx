@@ -3,6 +3,7 @@ import {
   Dispatch,
   SelectorDict,
   SelectorKey,
+  SelectorOptions,
   SelectorState,
 } from 'web-redux-core'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
@@ -26,7 +27,7 @@ export function StoreProvider(props: {
 }
 
 export function useStore<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   RootAction extends Action,
 >(): StoreClient<RootSelectorDict, RootAction> {
   const store = useContext(StoreContext)
@@ -46,7 +47,7 @@ export function useDispatch<RootAction extends Action>(): Dispatch<RootAction> {
 }
 
 export type SuspendState<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   Key extends SelectorKey<RootSelectorDict>,
 > =
   | {
@@ -58,9 +59,9 @@ export type SuspendState<
     }
 
 export function useSelector<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   Key extends string & SelectorKey<RootSelectorDict>,
->(selector: Key) {
+>(selector: Key, options: SelectorOptions<RootSelectorDict, Key>) {
   const store = useStore()
 
   const [state, setState] = useState<SuspendState<RootSelectorDict, Key>>({
@@ -69,38 +70,57 @@ export function useSelector<
 
   useEffect(
     () =>
-      store.subscribe(selector, (value: SelectorState<RootSelectorDict, Key>) =>
-        setState({ isLoading: false, value }),
+      store.subscribe(
+        selector,
+        options,
+        (value: SelectorState<RootSelectorDict, Key>) =>
+          setState({ isLoading: false, value }),
       ),
-    [selector, store],
+    [store, selector, options],
   )
 
   return state
 }
 
+export type Subscription<
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
+  Key extends string & SelectorKey<RootSelectorDict>,
+> = {
+  selector: Key
+  options: SelectorOptions<RootSelectorDict, Key>
+}
+
 export function useSelectorObject<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   Key extends string & SelectorKey<RootSelectorDict>,
   Field extends string,
->(selectorObject: Record<Field, Key>) {
+>(
+  selectorObject:
+    | undefined
+    | Record<Field, Subscription<RootSelectorDict, Key>>,
+) {
   const store = useStore()
 
   type State = SuspendState<RootSelectorDict, Key>
   type StateDict = Record<Field, State>
   const [state, setState] = useState<StateDict>(() => {
     let state = {} as StateDict
-    for (let key in selectorObject) {
-      state[key] = { isLoading: true }
+    if (selectorObject) {
+      for (let key in selectorObject) {
+        state[key] = { isLoading: true }
+      }
     }
     return state
   })
 
   useEffect(() => {
+    if (!selectorObject) return
     let unsubscribeList: Unsubscribe[] = []
     for (let key in selectorObject) {
-      let selector = selectorObject[key]
+      let subscription = selectorObject[key]
       let unsubscribe = store.subscribe(
-        selector,
+        subscription.selector,
+        subscription.options,
         (value: SelectorState<RootSelectorDict, Key>) =>
           setState((state) => ({
             ...state,

@@ -3,16 +3,17 @@ import {
   Dispatch,
   SelectorDict,
   SelectorKey,
+  SelectorOptions,
   SelectorState,
 } from 'web-redux-core'
 import { StoreClient } from '../store-client'
-import { useStore, useSelector, useDispatch, useSelectorObject } from './hooks'
-
-export type MapStateToProps<
-  RootSelectorDict extends SelectorDict<any, any, any>,
-  SelectorKey extends keyof RootSelectorDict,
-  Field extends string,
-> = () => Record<Field, SelectorKey>
+import {
+  useStore,
+  useSelector,
+  useDispatch,
+  useSelectorObject,
+  Subscription,
+} from './hooks'
 
 export type MapDispatchToProps<
   RootAction extends Action,
@@ -20,13 +21,13 @@ export type MapDispatchToProps<
 > = () => Record<Field, (dispatch: Dispatch<RootAction>) => void>
 
 export function connect<
-  RootSelectorDict extends SelectorDict<any, any, any>,
-  Key extends SelectorKey<RootSelectorDict>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
+  Key extends string & SelectorKey<RootSelectorDict>,
   RootAction extends Action,
   StateField extends string,
   ActionField extends string,
 >(
-  mapStateToProps?: MapStateToProps<RootSelectorDict, Key, StateField>,
+  selectorObject?: Record<StateField, Subscription<RootSelectorDict, Key>>,
   mapDispatchToProps?: MapDispatchToProps<RootAction, ActionField>,
 ): <Props, State>(
   Component: React.ComponentClass<Props, State>,
@@ -37,10 +38,9 @@ export function connect<
     return function (props: Omit<Props, StateField | ActionField>) {
       const dispatch = useDispatch()
 
-      let selectorObject = mapStateToProps ? mapStateToProps() : {}
       let selectorStateObject = useSelectorObject(selectorObject)
 
-      let childProps = { ...props, ...selectorStateObject } as Props
+      let childProps = { ...props, ...selectorStateObject } as unknown as Props
 
       if (mapDispatchToProps) {
         let props = mapDispatchToProps()
@@ -55,11 +55,12 @@ export function connect<
 }
 
 export function connectSuspend<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   Key extends string & SelectorKey<RootSelectorDict>,
   RootAction extends Action,
 >(props: {
   selector: Key
+  options: SelectorOptions<RootSelectorDict, Key>
   renderLoading: () => JSX.Element
   render: (props: {
     value: SelectorState<RootSelectorDict, Key>
@@ -69,7 +70,10 @@ export function connectSuspend<
 }) {
   return () => {
     const store = useStore<RootSelectorDict, RootAction>()
-    const state = useSelector<RootSelectorDict, Key>(props.selector)
+    const state = useSelector<RootSelectorDict, Key>(
+      props.selector,
+      props.options,
+    )
 
     let Loading = props.renderLoading
     let Content = props.render

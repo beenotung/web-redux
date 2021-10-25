@@ -16,8 +16,9 @@ export type DispatchMessage = {
 /* client to server */
 export type SubscribeMessage = {
   type: SocketMessageType.subscribe
-  key: Key
   id: ID
+  key: Key
+  options: any
 }
 
 /* server to client */

@@ -7,11 +7,12 @@ import {
   Dispatch,
   SocketMessage,
   SocketMessageType,
+  SelectorOptions,
 } from 'web-redux-core'
 import { SocketClient } from './socket-client'
 
 export type StoreClient<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   RootAction extends Action,
 > = {
   dispatch: Dispatch<RootAction>
@@ -20,21 +21,23 @@ export type StoreClient<
 }
 
 export type Subscribe<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   Key extends SelectorKey<RootSelectorDict>,
 > = (
   key: Key,
+  options: SelectorOptions<RootSelectorDict, Key>,
   stateListener: (subState: SelectorState<RootSelectorDict, Key>) => void,
 ) => Unsubscribe
 
 export type Unsubscribe = () => void
 
 export function createStoreClient<
-  RootSelectorDict extends SelectorDict<any, any, any>,
+  RootSelectorDict extends SelectorDict<any, any, any, any>,
   RootAction extends Action,
 >(socket: SocketClient): StoreClient<RootSelectorDict, RootAction> {
   type Subscription = {
     key: string & SelectorKey<RootSelectorDict>
+    options: any
     state_listener: (subState: any) => void
   }
   const subscriptionDict: Record<ID, Subscription> = {}
@@ -44,8 +47,9 @@ export function createStoreClient<
     Object.entries(subscriptionDict).forEach(([id, subscription]) => {
       socket.sendMessage({
         type: SocketMessageType.subscribe,
-        key: subscription.key,
         id,
+        key: subscription.key,
+        options: subscription.options,
       })
     })
   })
@@ -70,8 +74,12 @@ export function createStoreClient<
     })
   }
 
-  function subscribe<Key extends string & SelectorKey<RootSelectorDict>>(
+  function subscribe<
+    Key extends string & SelectorKey<RootSelectorDict>,
+    Options,
+  >(
     key: Key,
+    options: Options,
     stateListener: (subState: SelectorState<RootSelectorDict, Key>) => void,
   ): Unsubscribe {
     const id = nextID
@@ -79,6 +87,7 @@ export function createStoreClient<
 
     subscriptionDict[id] = {
       key,
+      options,
       state_listener: stateListener,
     }
 
@@ -86,6 +95,7 @@ export function createStoreClient<
       type: SocketMessageType.subscribe,
       key,
       id,
+      options,
     })
 
     function unsubscribe() {

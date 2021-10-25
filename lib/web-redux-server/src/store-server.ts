@@ -2,8 +2,9 @@ import { Action } from 'web-redux-core'
 
 const initialAction = { type: '@@INIT' } as any
 
-export type SelectorType<RootState, SubState = unknown> = {
-  map_state: (state: RootState) => SubState
+export type SelectorType<RootState, Options = unknown, SubState = unknown> = {
+  options: Options
+  map_state: (state: RootState, options: Options) => SubState
   receive_state: (sub_state: SubState) => void
 }
 
@@ -41,7 +42,7 @@ export function createStoreServer<RootState, RootAction extends Action>(
     if (newState === state) return
     state = newState
     selector_map.forEach((old_sub_state, selector) => {
-      let new_sub_state = selector.map_state(state)
+      let new_sub_state = selector.map_state(state, selector.options)
       if (new_sub_state !== old_sub_state) {
         selector.receive_state(new_sub_state)
         selector_map.set(selector, new_sub_state)
@@ -49,7 +50,7 @@ export function createStoreServer<RootState, RootAction extends Action>(
     })
   }
   function subscribe<SubState>(selector: Selector<SubState>) {
-    let sub_state = selector.map_state(state)
+    let sub_state = selector.map_state(state, selector.options)
     selector_map.set(selector, sub_state)
     selector.receive_state(sub_state)
 

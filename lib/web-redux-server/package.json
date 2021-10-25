@@ -27,7 +27,7 @@
   },
   "license": "BSD-2-Clause",
   "dependencies": {
-    "web-redux-core": "^1.0.1"
+    "web-redux-core": "file:../web-redux-core"
   },
   "devDependencies": {
     "@types/node": "^16.11.1",
