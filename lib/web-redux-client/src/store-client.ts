@@ -1,124 +1,103 @@
 import {
-  ID,
-  Action,
-  SelectorKey,
-  SelectorState,
-  SelectorDict,
-  Dispatch,
-  SocketMessage,
+  DispatchMessage,
   SocketMessageType,
-  SelectorOptions,
+  StateUpdateMessage,
+  SubscribeMessage,
+  UnsubscribeMessage,
 } from 'web-redux-core'
 import { SocketClient } from './socket-client'
 
-export type StoreClient<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  RootAction extends Action,
-> = {
-  dispatch: Dispatch<RootAction>
-  subscribe: Subscribe<RootSelectorDict, string & SelectorKey<RootSelectorDict>>
-  close: () => void
-}
+export class StoreClient<
+  ActionName extends string,
+  ActionOptions,
+  SelectorName extends string,
+  SelectorOptions,
+  SubState,
+> {
+  private nextSubscriptionID = 1
+  
+  // subscribeID -> unsubscribe
+  private subscriptionDict: Record<
+    number,
+    {
+      subscribeID: number
+      selectorName: SelectorName
+      selectorOptions: SelectorOptions
+      receivedSubState: (subState: SubState) => void
+    }
+  > = {}
 
-export type Subscribe<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends SelectorKey<RootSelectorDict>,
-> = (
-  key: Key,
-  options: SelectorOptions<RootSelectorDict, Key>,
-  stateListener: (subState: SelectorState<RootSelectorDict, Key>) => void,
-) => Unsubscribe
-
-export type Unsubscribe = () => void
-
-export function createStoreClient<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  RootAction extends Action,
->(socket: SocketClient): StoreClient<RootSelectorDict, RootAction> {
-  type Subscription = {
-    key: string & SelectorKey<RootSelectorDict>
-    options: any
-    state_listener: (subState: any) => void
-  }
-  const subscriptionDict: Record<ID, Subscription> = {}
-  let nextID = 1
-
-  socket.addEventListener('reconnect', () => {
-    Object.entries(subscriptionDict).forEach(([id, subscription]) => {
-      socket.sendMessage({
-        type: SocketMessageType.subscribe,
-        id,
-        key: subscription.key,
-        options: subscription.options,
+  constructor(public socket: SocketClient) {
+    socket.addEventListener('reconnect', () => {
+      Object.values(this.subscriptionDict).forEach(subscription => {
+        const msg: SubscribeMessage = [
+          SocketMessageType.subscribe,
+          subscription.subscribeID,
+          subscription.selectorName,
+          subscription.selectorOptions,
+        ]
+        socket.sendMessage(msg)
       })
     })
-  })
 
-  socket.addEventListener('message', (ev) => {
-    let message: SocketMessage = JSON.parse(String(ev.data))
-    switch (message.type) {
-      case SocketMessageType.update: {
-        let subscription = subscriptionDict[message.id]
-        subscription?.state_listener(message.state)
+    socket.addEventListener('message', ev => {
+      const msg: StateUpdateMessage<SubState> = JSON.parse(String(ev.data))
+      if (msg[0] !== SocketMessageType.update) {
+        console.debug('received unknown socket message:', msg)
         return
       }
-      default:
-        console.debug('received unknown socket message:', message)
-    }
-  })
-
-  function dispatch(action: RootAction) {
-    socket.sendMessage({
-      type: SocketMessageType.dispatch,
-      action,
+      const subscription = this.subscriptionDict[msg[1]]
+      if (!subscription) return
+      subscription.receivedSubState(msg[2])
     })
   }
 
-  function subscribe<
-    Key extends string & SelectorKey<RootSelectorDict>,
-    Options,
-  >(
-    key: Key,
-    options: Options,
-    stateListener: (subState: SelectorState<RootSelectorDict, Key>) => void,
-  ): Unsubscribe {
-    const id = nextID
-    nextID++
+  dispatch(actionName: ActionName, actionOptions: ActionOptions) {
+    const msg: DispatchMessage = [
+      SocketMessageType.dispatch,
+      actionName,
+      actionOptions,
+    ]
+    this.socket.sendMessage(msg)
+  }
 
-    subscriptionDict[id] = {
-      key,
-      options,
-      state_listener: stateListener,
+  subscribe(
+    selectorName: SelectorName,
+    selectorOptions: SelectorOptions,
+    receivedSubState: (subState: SubState) => void,
+  ) {
+    const subscribeID = this.nextSubscriptionID
+    this.nextSubscriptionID++
+
+    this.subscriptionDict[subscribeID] = {
+      subscribeID,
+      selectorName,
+      selectorOptions,
+      receivedSubState,
     }
 
-    socket.sendMessage({
-      type: SocketMessageType.subscribe,
-      key,
-      id,
-      options,
-    })
+    const msg: SubscribeMessage = [
+      SocketMessageType.subscribe,
+      subscribeID,
+      selectorName,
+      selectorOptions,
+    ]
+    this.socket.sendMessage(msg)
 
-    function unsubscribe() {
-      delete subscriptionDict[id]
-      socket.sendMessage({
-        type: SocketMessageType.unsubscribe,
-        id,
-      })
+    const unsubscribe = () => {
+      const msg: UnsubscribeMessage = [
+        SocketMessageType.unsubscribe,
+        subscribeID,
+      ]
+      this.socket.sendMessage(msg)
     }
-
     return unsubscribe
   }
 
-  function close() {
-    let code = SocketClient.NORMAL_CLOSURE
-    let reason = 'StoreClient closed'
-    socket.close(code, reason)
-    Object.keys(subscriptionDict).forEach((key) => delete subscriptionDict[key])
-  }
-
-  return {
-    dispatch,
-    subscribe,
-    close,
+  close() {
+    const code = SocketClient.NORMAL_CLOSURE
+    const reason = 'StoreClient closed'
+    this.socket.close(code, reason)
+    this.subscriptionDict = {}
   }
 }

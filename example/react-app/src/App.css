@@ -2,9 +2,15 @@
   /* text-align: center; */
 }
 
+.App-banner {
+  display: flex;
+  align-items: center;
+}
+
 .App-logo {
-  height: 40vmin;
+  height: 2em;
   pointer-events: none;
+  margin-right: 0.5em;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -36,4 +42,18 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.Todo-list {
+}
+
+.Todo-item button {
+  margin: 0 0.25em;
+  padding: 0.25em;
+  font-weight: bolder;
+}
+
+.Todo-count,
+.Todo-text {
+  margin-left: 0.5em;
 }

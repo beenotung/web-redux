@@ -1,70 +1,77 @@
-import { Action } from 'web-redux-core'
+import type {
+  ReducerDict,
+  SelectorDict,
+  ExtractActionOptions,
+  ExtractSelectorOptions,
+  ExtractSelectorSubState,
+} from 'web-redux-core'
 
-const initialAction = { type: '@@INIT' } as any
+export class StoreServer<
+  State,
+  AppReducerDict extends ReducerDict<State, any, any>,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
+> {
+  private state: State
+  private subscriptionSet = new Set<{
+    selectorName: keyof AppSelectorDict
+    selectorOptions: ExtractSelectorOptions<AppSelectorDict, any>
+    receiveSubState: (
+      subState: ExtractSelectorSubState<AppSelectorDict, any>,
+    ) => void
+    subState: ExtractSelectorSubState<AppSelectorDict, any>
+  }>()
 
-export type SelectorType<RootState, Options = unknown, SubState = unknown> = {
-  options: Options
-  map_state: (state: RootState, options: Options) => SubState
-  receive_state: (sub_state: SubState) => void
-}
-
-export type Unsubscribe = () => void
-
-export type Reducer<State, RootAction extends Action> = (
-  state: State | undefined,
-  action: RootAction,
-) => State
-
-export type StoreServer<RootState, RootAction extends Action> = {
-  getState: () => RootState
-  replaceReducer: (newReducer: Reducer<RootState, RootAction>) => void
-  dispatch: (action: RootAction) => void
-  subscribe: <SubState>(
-    selector: SelectorType<RootState, SubState>,
-  ) => Unsubscribe
-}
-
-export function createStoreServer<RootState, RootAction extends Action>(
-  reducer: (state: RootState | undefined, action: RootAction) => RootState,
-): StoreServer<RootState, RootAction> {
-  let state = reducer(undefined, initialAction)
-  type Selector<SubState> = SelectorType<RootState, SubState>
-  // Selector<SubState> -> SubState
-  let selector_map = new Map<Selector<any>, any>()
-  function getState(): RootState {
-    return state
+  constructor(
+    initialState: () => State,
+    public reducerDict: AppReducerDict,
+    public selectorDict: AppSelectorDict,
+  ) {
+    this.state = initialState()
   }
-  function replaceReducer(newReducer: typeof reducer) {
-    reducer = newReducer
+
+  getState() {
+    return this.state
   }
-  function dispatch(action: RootAction): void {
-    let newState = reducer(state, action)
-    if (newState === state) return
-    state = newState
-    selector_map.forEach((old_sub_state, selector) => {
-      let new_sub_state = selector.map_state(state, selector.options)
-      if (new_sub_state !== old_sub_state) {
-        selector.receive_state(new_sub_state)
-        selector_map.set(selector, new_sub_state)
-      }
+
+  dispatch<ActionName extends keyof AppReducerDict>(
+    actionName: ActionName,
+    actionOptions: ExtractActionOptions<AppReducerDict, ActionName>,
+  ) {
+    const reducer = this.reducerDict[actionName]
+    const newState = reducer(this.state, actionOptions)
+    if (newState === this.state) return
+    this.state = newState
+    this.subscriptionSet.forEach(subscription => {
+      const selector = this.selectorDict[subscription.selectorName]
+      const newSubState = selector(this.state, subscription.selectorOptions)
+      if (newSubState === subscription.subState) return
+      subscription.subState = newSubState
+      subscription.receiveSubState(newSubState)
     })
   }
-  function subscribe<SubState>(selector: Selector<SubState>) {
-    let sub_state = selector.map_state(state, selector.options)
-    selector_map.set(selector, sub_state)
-    selector.receive_state(sub_state)
 
-    function unsubscribe(): void {
-      selector_map.delete(selector)
+  subscribe<SelectorName extends keyof AppSelectorDict>(
+    selectorName: SelectorName,
+    selectorOptions: ExtractSelectorOptions<AppSelectorDict, SelectorName>,
+    receiveSubState: (
+      subState: ExtractSelectorSubState<AppSelectorDict, SelectorName>,
+    ) => void,
+  ) {
+    const selector = this.selectorDict[selectorName]
+    const subState = selector(this.state, selectorOptions)
+    receiveSubState(subState)
+
+    const subscription = {
+      selectorName,
+      selectorOptions,
+      receiveSubState,
+      subState,
     }
+    this.subscriptionSet.add(subscription)
 
+    const unsubscribe = () => {
+      this.subscriptionSet.delete(subscription)
+    }
     return unsubscribe
-  }
-
-  return {
-    getState,
-    replaceReducer,
-    dispatch,
-    subscribe,
   }
 }

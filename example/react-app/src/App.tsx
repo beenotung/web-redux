@@ -23,18 +23,38 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Web Reducer Demo</h1>
-        <a
-          className="App-link"
-          href="https://github.com/beenotung/web-redux-template"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Learn More
-        </a>
+        <div className="App-banner">
+          <img src="/logo192.png" className="App-logo" />
+          <a
+            className="App-link"
+            href="https://github.com/beenotung/web-redux"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Learn More
+          </a>
+        </div>
 
+        <TodoList />
         <UserPage />
       </header>
     </div>
+  )
+}
+
+function TodoList() {
+  return (
+    <>
+      <h2>Todo List</h2>
+      <div className="Todo-list">
+        <div className="Todo-item">
+          <button>Delete</button>
+          <button>Tick</button>
+          <span className="Todo-count">x 1</span>
+          <span className="Todo-text">text</span>
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -93,7 +113,7 @@ function UserList() {
         <p>Loading User List...</p>
       ) : (
         <>
-          {userListSelector.value.map((user) => (
+          {userListSelector.value.map(user => (
             <div key={user.id}>
               #{user.id} {user.username}
             </div>

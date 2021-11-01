@@ -1,30 +1,17 @@
 export type RootState = {
-  user_list: List<User>
-  post_list: List<Post>
-  comment_list: List<Comment>
+  item_list: List<Item>
 }
 
 export type List<T> = {
-  array: T[]
   dict: Record<ID, T>
+  next_id: number
+  size: number
 }
 
 export type ID = string | number
 
-export type User = {
+export type Item = {
   id: ID
-  username: string
-  password: string
-}
-
-export type Post = {
-  id: ID
-  user_id: ID
-  content: string
-}
-
-export type Comment = {
-  id: ID
-  user_id: ID
-  post_id: ID
+  text: string
+  tick: number
 }

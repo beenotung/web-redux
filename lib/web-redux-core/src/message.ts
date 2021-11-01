@@ -1,5 +1,3 @@
-import { Action, ID, Key } from './types'
-
 export enum SocketMessageType {
   dispatch,
   subscribe,
@@ -8,31 +6,35 @@ export enum SocketMessageType {
 }
 
 /* client or storage to server */
-export type DispatchMessage = {
-  type: SocketMessageType.dispatch
-  action: Action
-}
+export type DispatchMessage<ActionName = string, ActionOptions = unknown> = [
+  type: SocketMessageType.dispatch,
+  actionType: ActionName,
+  actionOptions: ActionOptions,
+]
 
 /* client to server */
-export type SubscribeMessage = {
-  type: SocketMessageType.subscribe
-  id: ID
-  key: Key
-  options: any
-}
+export type SubscribeMessage<
+  SelectorName = string,
+  SelectorOptions = unknown,
+> = [
+  type: SocketMessageType.subscribe,
+  subscribeID: number,
+  selectorType: SelectorName,
+  selectorOptions: SelectorOptions,
+]
 
-/* server to client */
-export type StateUpdateMessage<SubState = unknown> = {
-  type: SocketMessageType.update
-  id: ID
-  state: SubState
-}
+/* server to client (response to subscribe) */
+export type StateUpdateMessage<SubState = unknown> = [
+  type: SocketMessageType.update,
+  subscribeID: number,
+  subState: SubState,
+]
 
 /* client to server */
-export type UnsubscribeMessage = {
-  type: SocketMessageType.unsubscribe
-  id: ID
-}
+export type UnsubscribeMessage = [
+  type: SocketMessageType.unsubscribe,
+  subscribeID: number,
+]
 
 export type SocketMessage =
   | DispatchMessage

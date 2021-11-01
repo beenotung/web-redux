@@ -7,6 +7,9 @@
     "sourceMap": true,
     "target": "ES6",
     "module": "commonjs",
+    "lib": [
+      "es2017.object"
+    ],
     "outDir": "dist"
   }
 }

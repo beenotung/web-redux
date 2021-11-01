@@ -1,70 +1,78 @@
+import type ws from 'typestub-ws'
+import type { StoreServer } from './store-server'
 import {
-  Action,
   ID,
   SocketMessage,
   SocketMessageType,
+  DispatchMessage,
+  SubscribeMessage,
+  StateUpdateMessage,
+  UnsubscribeMessage,
+  ReducerDict,
   SelectorDict,
-  StoreState,
+  ExtractActionOptions,
+  ExtractSelectorOptions,
+  ExtractSelectorSubState,
 } from 'web-redux-core'
-import type ws from 'typestub-ws'
-import { SelectorType, StoreServer } from './store-server'
-
-type Unsubscribe = () => void
 
 export function attachSocketServer<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  RootAction extends Action,
+  State,
+  AppReducerDict extends ReducerDict<State, any, any>,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
 >(
-  store: StoreServer<StoreState<RootSelectorDict>, RootAction>,
-  selector_dict: RootSelectorDict,
+  store: StoreServer<State, AppReducerDict, AppSelectorDict>,
   wss: ws.WebSocketServer,
 ) {
-  wss.on('connection', (ws) => {
-    const active_selector_dict: Record<ID, Unsubscribe> = {}
-    ws.on('close', () => {
-      Object.entries(active_selector_dict).forEach(([id, unsubscribe]) => {
-        unsubscribe()
-        delete active_selector_dict[id]
-      })
-    })
-    ws.on('message', (data) => {
-      let message: SocketMessage = JSON.parse(String(data))
-      switch (message.type) {
+  wss.on('connection', ws => {
+    // subscribeID -> unsubscribe
+    const subscriptionDict: Record<ID, () => void> = {}
+    ws.on('close', () => {})
+    ws.on('message', data => {
+      const message: SocketMessage = JSON.parse(String(data))
+      switch (message[0]) {
         case SocketMessageType.dispatch: {
-          store.dispatch(message.action as RootAction)
-          return
+          const msg = message as DispatchMessage<
+            keyof AppReducerDict,
+            ExtractActionOptions<AppReducerDict, keyof AppReducerDict>
+          >
+          store.dispatch(msg[1], msg[2])
+          break
         }
         case SocketMessageType.subscribe: {
-          console.log('subscribe:', {
-            message,
+          const msg = message as SubscribeMessage<
+            keyof AppSelectorDict,
+            ExtractSelectorOptions<AppSelectorDict, keyof AppSelectorDict>
+          >
+          const id = msg[1]
+          const unsubscribe = store.subscribe(msg[2], msg[3], subState => {
+            const message: StateUpdateMessage<
+              ExtractSelectorSubState<AppSelectorDict, keyof AppSelectorDict>
+            > = [SocketMessageType.update, id, subState]
+            ws.send(JSON.stringify(message))
           })
-          let id = message.id
-          let map_state = selector_dict[message.key]
-          let selector: SelectorType<StoreState<RootSelectorDict>> = {
-            options: message.options,
-            map_state,
-            receive_state(state: unknown) {
-              let message: SocketMessage = {
-                type: SocketMessageType.update,
-                id,
-                state,
-              }
-              ws.send(JSON.stringify(message))
-            },
-          }
-          active_selector_dict[id] = store.subscribe(selector)
-          return
+          subscriptionDict[id] = unsubscribe
+          break
+        }
+        case SocketMessageType.update: {
+          console.debug(
+            "Shouldn't received update message from client. This should be sent from server to client only.",
+          )
+          break
         }
         case SocketMessageType.unsubscribe: {
-          let unsubscribe = active_selector_dict[message.id]
+          const msg = message as UnsubscribeMessage
+          const id = msg[1]
+          const unsubscribe = subscriptionDict[id]
           if (unsubscribe) {
             unsubscribe()
-            delete active_selector_dict[message.id]
+            delete subscriptionDict[id]
           }
-          return
+          break
         }
-        default:
-          console.debug('received unknown socket message:', message)
+        default: {
+          const msg: never = message
+          console.debug('received unknown socket message:', msg)
+        }
       }
     })
   })

@@ -1,26 +1,19 @@
 import { RootState } from './state'
 
-let MaxPageItems = 20
+let MaxItemPerPage = 20
 
 export let selector_dict = {
-  user_list: (
-    state: RootState,
-    options: { offset?: number; count?: number },
-  ) => {
+  item_list(state: RootState, options: { offset?: number; count?: number }) {
     let offset = options.offset || 0
-    let count = options.count || MaxPageItems
-    count = Math.min(count, MaxPageItems)
+    let count = options.count || MaxItemPerPage
+    count = Math.min(count, MaxItemPerPage)
 
-    return state.user_list.array
-      .map((user) => {
-        return { id: user.id, username: user.username }
-      })
-      .slice(offset)
-      .slice(0, count)
+    return Object.values(state.item_list.dict).slice(offset, offset + count)
   },
-  user_count: (state: RootState, options: {}) => {
-    return state.user_list.array.length
+
+  item_count(state: RootState, options: {}) {
+    return state.item_list.dict.size
   },
 }
 
-export type RootSelectorDict = typeof selector_dict
+export type SelectorDict = typeof selector_dict

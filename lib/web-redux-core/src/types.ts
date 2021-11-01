@@ -1,37 +1,39 @@
-export type ID = string | number
-export type Key = string | number
+export type ID = number | string
 
-export type Action = {
-  type: Key
-}
+export type Selector<State, SelectorOptions, SubState> = (
+  state: State,
+  selectorOptions: SelectorOptions,
+) => SubState
+
+export type Reducer<State, ActionOptions> = (
+  state: State,
+  actionOptions: ActionOptions,
+) => State
 
 export type SelectorDict<
-  RootState,
-  SelectorKey extends Key,
-  Options,
+  State,
+  SelectorName extends string,
+  SelectorOptions,
   SubState,
-> = Record<SelectorKey, (state: RootState, options: Options) => SubState>
+> = Record<SelectorName, Selector<State, SelectorOptions, SubState>>
 
-export type SelectorKey<Dict extends SelectorDict<any, any, any, any>> =
-  keyof Dict
+export type ReducerDict<
+  State,
+  ActionName extends string,
+  ActionOptions,
+> = Record<ActionName, Reducer<State, ActionOptions>>
 
-export type Selector<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends SelectorKey<RootSelectorDict>,
-> = RootSelectorDict[Key]
+export type ExtractActionOptions<
+  AppReducerDict extends ReducerDict<any, any, any>,
+  ActionName extends keyof AppReducerDict,
+> = Parameters<AppReducerDict[ActionName]>[1]
 
-export type StoreState<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-> = Parameters<Selector<RootSelectorDict, keyof RootSelectorDict>>[0]
+export type ExtractSelectorOptions<
+  AppSelectorDict extends SelectorDict<any, any, any, any>,
+  SelectorName extends keyof AppSelectorDict,
+> = Parameters<AppSelectorDict[SelectorName]>[1]
 
-export type SelectorOptions<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends keyof RootSelectorDict,
-> = Parameters<Selector<RootSelectorDict, Key>>[1]
-
-export type SelectorState<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends SelectorKey<RootSelectorDict>,
-> = ReturnType<Selector<RootSelectorDict, Key>>
-
-export type Dispatch<RootAction extends Action> = (action: RootAction) => void
+export type ExtractSelectorSubState<
+  AppSelectorDict extends SelectorDict<any, any, any, any>,
+  SelectorName extends keyof AppSelectorDict,
+> = Parameters<AppSelectorDict[SelectorName]>[2]
