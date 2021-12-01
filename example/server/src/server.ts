@@ -1,6 +1,6 @@
 import express from 'express'
 import { print } from 'listening-on'
-import { rootReducer } from './reducer'
+import { reducer_dict } from 'common'
 import ws from 'typestub-ws'
 import http from 'http'
 import { attachSocketServer, createStoreServer } from 'web-redux-server'

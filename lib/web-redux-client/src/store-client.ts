@@ -15,7 +15,7 @@ export class StoreClient<
   SubState,
 > {
   private nextSubscriptionID = 1
-  
+
   // subscribeID -> unsubscribe
   private subscriptionDict: Record<
     number,
@@ -29,7 +29,7 @@ export class StoreClient<
 
   constructor(public socket: SocketClient) {
     socket.addEventListener('reconnect', () => {
-      Object.values(this.subscriptionDict).forEach(subscription => {
+      Object.values(this.subscriptionDict).forEach((subscription) => {
         const msg: SubscribeMessage = [
           SocketMessageType.subscribe,
           subscription.subscribeID,
@@ -40,7 +40,7 @@ export class StoreClient<
       })
     })
 
-    socket.addEventListener('message', ev => {
+    socket.addEventListener('message', (ev) => {
       const msg: StateUpdateMessage<SubState> = JSON.parse(String(ev.data))
       if (msg[0] !== SocketMessageType.update) {
         console.debug('received unknown socket message:', msg)

@@ -1,12 +1,16 @@
+import { Dict, Collection, ObjectDict } from 'live-data-sync'
+
 export type RootState = {
-  item_list: List<Item>
+  collection: Collection<CollectionData>
+  dict: Dict<DictData>
+  item_count: number
 }
 
-export type List<T> = {
-  dict: Record<ID, T>
-  next_id: number
-  size: number
+export type CollectionData = {
+  items: ObjectDict<Item>
 }
+
+export type DictData = {}
 
 export type ID = string | number
 

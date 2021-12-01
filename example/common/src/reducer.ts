@@ -1,94 +1,57 @@
-import { ID, List, RootState } from './state'
+import { CollectionData, DictData, ID, RootState } from './state'
+import { Collection, Dict } from 'live-data-sync'
+import { newDB } from 'better-sqlite3-schema'
 
 export function initialState(): RootState {
+  let db = newDB({ path: 'data/state.db', migrate: false })
+  let collection = new Collection<CollectionData>(db)
+  let dict = new Dict<DictData>(db)
+  let item_count = Object.keys(collection.data.items).length
   return {
-    item_list: emptyList(),
+    collection,
+    dict,
+    item_count,
   }
 }
 
 export let reducer_dict = {
   addItem(state: RootState, options: { text: string }): RootState {
+    let id = state.collection.add('items', {
+      id: null as any,
+      text: options.text,
+      tick: 0,
+    }) as number
+    state.collection.update('items', id, { id })
     return {
       ...state,
-      item_list: appendList(state.item_list, {
-        id: state.item_list.next_id,
-        text: options.text,
-        tick: 0,
-      }),
+      item_count: state.item_count + 1,
     }
   },
 
   tickItem(state: RootState, options: { id: ID }): RootState {
-    return {
-      ...state,
-      item_list: updateListItem(state.item_list, options.id, item => ({
-        ...item,
-        tick: item.tick + 1,
-      })),
-    }
+    let id = options.id as number
+    let item = state.collection.data.items[id]
+    state.collection.update('items', id, { tick: item.tick + 1 })
+    return { ...state }
   },
 
   renameItem(state: RootState, options: { id: ID; text: string }): RootState {
-    return {
-      ...state,
-      item_list: updateListItem(state.item_list, options.id, item => ({
-        ...item,
-        text: options.text,
-      })),
-    }
+    let id = options.id as number
+    state.collection.update('items', id, { text: options.text })
+    return { ...state }
   },
 
   deleteItem(state: RootState, options: { id: ID }): RootState {
+    let id = options.id as number
+    if (!(id in state.collection.data.items)) {
+      return state
+    }
+    state.collection.delete('items', id)
     return {
       ...state,
-      item_list: removeListItem(state.item_list, options.id),
+      item_count: state.item_count - 1,
     }
   },
 }
 
 export type ReducerDict = typeof reducer_dict
-
-function emptyList<T>(): List<T> {
-  return {
-    dict: {},
-    next_id: 1,
-    size: 0,
-  }
-}
-
-function appendList<T>(list: List<T>, item: T): List<T> {
-  return {
-    dict: { ...list.dict, [list.next_id]: item },
-    next_id: list.next_id + 1,
-    size: list.size + 1,
-  }
-}
-
-function removeListItem<T>(list: List<T>, id: ID): List<T> {
-  if (!(id in list.dict)) {
-    return list
-  }
-  const { [id]: item, ...newDict } = list.dict
-  return {
-    dict: newDict,
-    size: list.size - 1,
-    next_id: list.next_id,
-  }
-}
-
-function updateListItem<T>(
-  list: List<T>,
-  id: ID,
-  update: (item: T) => T,
-): List<T> {
-  if (!(id in list.dict)) {
-    return list
-  }
-  const item = list.dict[id]
-  const newItem = update(item)
-  return {
-    dict: { ...list.dict, [id]: newItem },
-    next_id: list.next_id,
-    size: list.size,
-  }
-}

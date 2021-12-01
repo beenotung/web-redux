@@ -113,7 +113,7 @@ function UserList() {
         <p>Loading User List...</p>
       ) : (
         <>
-          {userListSelector.value.map(user => (
+          {userListSelector.value.map((user) => (
             <div key={user.id}>
               #{user.id} {user.username}
             </div>

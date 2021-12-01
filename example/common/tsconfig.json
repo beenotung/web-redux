@@ -5,11 +5,10 @@
     "strict": true,
     "declaration": true,
     "sourceMap": true,
+    "skipLibCheck": true,
     "target": "ES6",
     "module": "commonjs",
-    "lib": [
-      "es2017.object"
-    ],
+    "lib": ["es2017.object"],
     "outDir": "dist"
   }
 }

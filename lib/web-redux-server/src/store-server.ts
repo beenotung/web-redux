@@ -7,22 +7,21 @@ import type {
 } from 'web-redux-core'
 
 export class StoreServer<
-  State,
-  AppReducerDict extends ReducerDict<State, any, any>,
-  AppSelectorDict extends SelectorDict<State, any, any, any>,
+  AppState,
+  AppReducerDict extends ReducerDict<AppState, any, any>,
+  AppSelectorDict extends SelectorDict<AppState, any, any, any>,
 > {
-  private state: State
+  private state: AppState
   private subscriptionSet = new Set<{
     selectorName: keyof AppSelectorDict
     selectorOptions: ExtractSelectorOptions<AppSelectorDict, any>
     receiveSubState: (
       subState: ExtractSelectorSubState<AppSelectorDict, any>,
     ) => void
-    subState: ExtractSelectorSubState<AppSelectorDict, any>
   }>()
 
   constructor(
-    initialState: () => State,
+    initialState: () => AppState,
     public reducerDict: AppReducerDict,
     public selectorDict: AppSelectorDict,
   ) {
@@ -41,12 +40,13 @@ export class StoreServer<
     const newState = reducer(this.state, actionOptions)
     if (newState === this.state) return
     this.state = newState
-    this.subscriptionSet.forEach(subscription => {
+    this.subscriptionSet.forEach((subscription) => {
       const selector = this.selectorDict[subscription.selectorName]
-      const newSubState = selector(this.state, subscription.selectorOptions)
-      if (newSubState === subscription.subState) return
-      subscription.subState = newSubState
-      subscription.receiveSubState(newSubState)
+      selector(
+        this.state,
+        subscription.selectorOptions,
+        subscription.receiveSubState,
+      )
     })
   }
 
@@ -58,14 +58,12 @@ export class StoreServer<
     ) => void,
   ) {
     const selector = this.selectorDict[selectorName]
-    const subState = selector(this.state, selectorOptions)
-    receiveSubState(subState)
+    selector(this.state, selectorOptions, receiveSubState)
 
     const subscription = {
       selectorName,
       selectorOptions,
       receiveSubState,
-      subState,
     }
     this.subscriptionSet.add(subscription)
 

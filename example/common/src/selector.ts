@@ -1,18 +1,37 @@
-import { RootState } from './state'
+import { Item, RootState } from './state'
+import {
+  makeSyncComputeCacheByOptions,
+  makeSyncComputeCacheByArguments,
+} from 'cache-compute'
+import { Callback } from 'web-redux-core'
 
-let MaxItemPerPage = 20
+const MaxItemPerPage = 20
+
+let selectItemList = (
+  items: RootState['collection']['data']['items'],
+  offset: number,
+  count: number,
+): Item[] => {
+  return Object.values(items).slice(offset, offset + count)
+}
 
 export let selector_dict = {
-  item_list(state: RootState, options: { offset?: number; count?: number }) {
+  item_list(
+    state: RootState,
+    options: { offset?: number; count?: number },
+    callback: Callback<Item[]>,
+  ): void {
+    let compute = makeSyncComputeCacheByArguments(selectItemList, callback)
     let offset = options.offset || 0
     let count = options.count || MaxItemPerPage
     count = Math.min(count, MaxItemPerPage)
 
-    return Object.values(state.item_list.dict).slice(offset, offset + count)
+    let items = state.collection.data.items
+    compute(items, offset, count)
   },
 
-  item_count(state: RootState, options: {}) {
-    return state.item_list.dict.size
+  item_count(state: RootState, options: {}, callback: Callback<number>): void {
+    callback(state.item_count)
   },
 }
 

@@ -16,10 +16,14 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^16.11.6",
+    "better-sqlite3-schema": "^2.1.1",
+    "cache-compute": "^1.0.1",
+    "live-data-sync": "^1.0.0",
     "rimraf": "^3.0.2",
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "live-state.ts": "^0.0.0",
     "web-redux-core": "^1.0.1"
   }
 }

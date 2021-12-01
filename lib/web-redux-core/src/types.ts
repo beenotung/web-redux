@@ -3,7 +3,8 @@ export type ID = number | string
 export type Selector<State, SelectorOptions, SubState> = (
   state: State,
   selectorOptions: SelectorOptions,
-) => SubState
+  callback: Callback<SubState>,
+) => void
 
 export type Reducer<State, ActionOptions> = (
   state: State,
@@ -36,4 +37,8 @@ export type ExtractSelectorOptions<
 export type ExtractSelectorSubState<
   AppSelectorDict extends SelectorDict<any, any, any, any>,
   SelectorName extends keyof AppSelectorDict,
-> = Parameters<AppSelectorDict[SelectorName]>[2]
+> = CallbackData<Parameters<AppSelectorDict[SelectorName]>[2]>
+
+export type Callback<T> = (data: T) => void
+
+export type CallbackData<C extends Callback<any>> = Parameters<C>[0]

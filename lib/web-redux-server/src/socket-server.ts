@@ -23,11 +23,11 @@ export function attachSocketServer<
   store: StoreServer<State, AppReducerDict, AppSelectorDict>,
   wss: ws.WebSocketServer,
 ) {
-  wss.on('connection', ws => {
+  wss.on('connection', (ws) => {
     // subscribeID -> unsubscribe
     const subscriptionDict: Record<ID, () => void> = {}
     ws.on('close', () => {})
-    ws.on('message', data => {
+    ws.on('message', (data) => {
       const message: SocketMessage = JSON.parse(String(data))
       switch (message[0]) {
         case SocketMessageType.dispatch: {
@@ -44,7 +44,7 @@ export function attachSocketServer<
             ExtractSelectorOptions<AppSelectorDict, keyof AppSelectorDict>
           >
           const id = msg[1]
-          const unsubscribe = store.subscribe(msg[2], msg[3], subState => {
+          const unsubscribe = store.subscribe(msg[2], msg[3], (subState) => {
             const message: StateUpdateMessage<
               ExtractSelectorSubState<AppSelectorDict, keyof AppSelectorDict>
             > = [SocketMessageType.update, id, subState]
