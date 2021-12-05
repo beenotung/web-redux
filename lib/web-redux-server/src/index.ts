@@ -1,3 +1,3 @@
 export * from 'web-redux-core/dist/types'
-export { attachSocketServer } from './socket-server'
+export { attachWebServer } from './web-server'
 export { StoreServer } from './store-server'

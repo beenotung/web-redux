@@ -1,136 +1,89 @@
-import {
-  Action,
-  Dispatch,
+import type {
+  ExtractSelectorOptions,
+  ExtractSelectorSubState,
+  ReducerDict,
   SelectorDict,
-  SelectorKey,
-  SelectorOptions,
-  SelectorState,
 } from 'web-redux-core'
+import type { WebClientOptions } from '../web-client'
+import type { Dispatch, StoreClient } from '../types'
+import { WebClient } from '../web-client'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { SocketClient } from '../socket-client'
-import { createStoreClient, StoreClient, Unsubscribe } from '../store-client'
 
-export const StoreContext = createContext<StoreClient<any, any> | null>(null)
+export const StoreContext = createContext<StoreClient<any, any, any> | null>(
+  null,
+)
 
-export function StoreProvider(props: {
-  url: string
-  children: JSX.Element
-  debug?: boolean
-}) {
-  const { url, children, debug } = props
+export function StoreProvider<
+  State,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+>(props: { children: JSX.Element; options: WebClientOptions }) {
+  const { children, options } = props
   const store = useMemo(
-    () => createStoreClient(new SocketClient({ url, debug })),
-    [url, debug],
+    (): StoreClient<State, AppSelectorDict, AppReducerDict> =>
+      new WebClient<State, AppSelectorDict, AppReducerDict>(options),
+    [options],
   )
   useEffect(() => () => store.close(), [store])
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 
 export function useStore<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  RootAction extends Action,
->(): StoreClient<RootSelectorDict, RootAction> {
+  State,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+>(): StoreClient<State, AppSelectorDict, AppReducerDict> {
   const store = useContext(StoreContext)
 
   if (!store) {
     throw new ReferenceError(
-      'Store is not defined in context. You should wrap the component inside <StoreContext.Provider value={store}>',
+      'Store is not defined in context. You should wrap the component inside <StoreProvider options={options}> or <StoreContext.Provider value={store}>',
     )
   }
 
   return store
 }
 
-export function useDispatch<RootAction extends Action>(): Dispatch<RootAction> {
+export function useDispatch<
+  State,
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+>(): Dispatch<State, AppReducerDict> {
   const store = useStore()
   return store.dispatch
 }
 
-export type SuspendState<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends SelectorKey<RootSelectorDict>,
-> =
+export type SuspendState<Value> =
   | {
       isLoading: true
     }
   | {
       isLoading: false
-      value: SelectorState<RootSelectorDict, Key>
+      value: Value
     }
 
+export const LoadingState: SuspendState<any> = { isLoading: true }
+
 export function useSelector<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends string & SelectorKey<RootSelectorDict>,
->(selector: Key, options: SelectorOptions<RootSelectorDict, Key>) {
+  AppState,
+  AppSelectorDict extends SelectorDict<AppState, any, any, any>,
+  SelectorName extends keyof AppSelectorDict & string,
+>(
+  selector: SelectorName,
+  options: ExtractSelectorOptions<AppSelectorDict, SelectorName>,
+) {
+  type SubState = ExtractSelectorSubState<AppSelectorDict, SelectorName>
+  type State = SuspendState<SubState>
   const store = useStore()
 
-  const [state, setState] = useState<SuspendState<RootSelectorDict, Key>>({
-    isLoading: true,
-  })
+  const [state, setState] = useState<State>(LoadingState)
 
   useEffect(
     () =>
-      store.subscribe(
-        selector,
-        options,
-        (value: SelectorState<RootSelectorDict, Key>) =>
-          setState({ isLoading: false, value }),
+      store.subscribe(selector, options, (value: SubState) =>
+        setState({ isLoading: false, value }),
       ),
-    [store, selector, options],
+    [store, selector, JSON.stringify(options)],
   )
-
-  return state
-}
-
-export type Subscription<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends string & SelectorKey<RootSelectorDict>,
-> = {
-  selector: Key
-  options: SelectorOptions<RootSelectorDict, Key>
-}
-
-export function useSelectorObject<
-  RootSelectorDict extends SelectorDict<any, any, any, any>,
-  Key extends string & SelectorKey<RootSelectorDict>,
-  Field extends string,
->(
-  selectorObject:
-    | undefined
-    | Record<Field, Subscription<RootSelectorDict, Key>>,
-) {
-  const store = useStore()
-
-  type State = SuspendState<RootSelectorDict, Key>
-  type StateDict = Record<Field, State>
-  const [state, setState] = useState<StateDict>(() => {
-    let state = {} as StateDict
-    if (selectorObject) {
-      for (let key in selectorObject) {
-        state[key] = { isLoading: true }
-      }
-    }
-    return state
-  })
-
-  useEffect(() => {
-    if (!selectorObject) return
-    let unsubscribeList: Unsubscribe[] = []
-    for (let key in selectorObject) {
-      let subscription = selectorObject[key]
-      let unsubscribe = store.subscribe(
-        subscription.selector,
-        subscription.options,
-        (value: SelectorState<RootSelectorDict, Key>) =>
-          setState((state) => ({
-            ...state,
-            [key]: { isLoading: false, value },
-          })),
-      )
-      unsubscribeList.push(unsubscribe)
-    }
-    return () => unsubscribeList.forEach((unsubscribe) => unsubscribe())
-  }, [selectorObject, store])
 
   return state
 }

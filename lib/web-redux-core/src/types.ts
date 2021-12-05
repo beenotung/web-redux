@@ -6,9 +6,10 @@ export type Selector<State, SelectorOptions, SubState> = (
   callback: Callback<SubState>,
 ) => void
 
-export type Reducer<State, ActionOptions> = (
+export type Reducer<State, ActionOptions, ActionResult> = (
   state: State,
   actionOptions: ActionOptions,
+  callback: Callback<ActionResult>,
 ) => State
 
 export type SelectorDict<
@@ -22,22 +23,38 @@ export type ReducerDict<
   State,
   ActionName extends string,
   ActionOptions,
-> = Record<ActionName, Reducer<State, ActionOptions>>
+  ActionResult,
+> = Record<ActionName, Reducer<State, ActionOptions, ActionResult>>
 
 export type ExtractActionOptions<
-  AppReducerDict extends ReducerDict<any, any, any>,
+  AppReducerDict extends ReducerDict<any, any, any, any>,
   ActionName extends keyof AppReducerDict,
 > = Parameters<AppReducerDict[ActionName]>[1]
+
+export type ExtractActionCallback<
+  AppReducerDict extends ReducerDict<any, any, any, any>,
+  ActionName extends keyof AppReducerDict,
+> = Parameters<AppReducerDict[ActionName]>[2]
+
+export type ExtractActionResult<
+  AppReducerDict extends ReducerDict<any, any, any, any>,
+  ActionName extends keyof AppReducerDict,
+> = CallbackData<Parameters<AppReducerDict[ActionName]>[2]>
 
 export type ExtractSelectorOptions<
   AppSelectorDict extends SelectorDict<any, any, any, any>,
   SelectorName extends keyof AppSelectorDict,
 > = Parameters<AppSelectorDict[SelectorName]>[1]
 
+export type ExtractSelectorCallback<
+  AppSelectorDict extends SelectorDict<any, any, any, any>,
+  SelectorName extends keyof AppSelectorDict,
+> = Parameters<AppSelectorDict[SelectorName]>[2]
+
 export type ExtractSelectorSubState<
   AppSelectorDict extends SelectorDict<any, any, any, any>,
   SelectorName extends keyof AppSelectorDict,
-> = CallbackData<Parameters<AppSelectorDict[SelectorName]>[2]>
+> = CallbackData<ExtractSelectorCallback<AppSelectorDict, SelectorName>>
 
 export type Callback<T> = (data: T) => void
 

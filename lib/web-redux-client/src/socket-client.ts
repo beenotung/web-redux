@@ -1,155 +1,97 @@
-import { SocketMessage } from 'web-redux-core'
+type Callback<T> = (data: T) => void
 
-function noop() {
-  // to disable debug log
+export interface SocketOptions {
+  wsUrl: string
+  minReconnectInterval?: number // default 500
+  maxReconnectInterval?: number // default 5000
+  maxReconnectAttempt?: number // default unlimited
+  reconnectIntervalBackOffFactor?: number // default 2
+  reconnectIntervalVariant?: number // default 0.3
 }
 
-type EventType = string
-type EventListener = (event: any) => void
-type EventOptions = any
-
-export type SocketOptions = {
-  url: string
-  debug?: boolean
-  minReconnectInterval?: number
-  maxReconnectInterval?: number
-  maxReconnectAttempt?: number
-  reconnectIntervalFactor?: number
-  reconnectIntervalVariant?: number
+export interface SocketEventHandlers<SocketMessage> {
+  onSocketMessage: Callback<SocketMessage>
+  onSocketOpen: Callback<void>
+  onSocketClose: Callback<void>
 }
-const defaultOptions: Omit<Required<SocketOptions>, 'url'> = {
-  debug: false,
+
+export interface SocketClientOptions<SocketMessage> {
+  socketOptions: SocketOptions
+  eventHandlers: SocketEventHandlers<SocketMessage>
+}
+
+const defaultOptions: Omit<
+  Required<SocketOptions>,
+  'wsUrl' | 'onMessage' | 'onOpen' | 'onClose'
+> = {
   minReconnectInterval: 500,
-  maxReconnectInterval: 5 * 1000,
-  reconnectIntervalFactor: 2,
-  maxReconnectAttempt: Number.MAX_SAFE_INTEGER,
+  maxReconnectInterval: 5000,
+  maxReconnectAttempt: Number.POSITIVE_INFINITY,
+  reconnectIntervalBackOffFactor: 2,
   reconnectIntervalVariant: 0.3,
 }
 
-export class SocketClient {
+export class SocketClient<SocketMessage> {
   static readonly NORMAL_CLOSURE = 1000
-  static readonly ABNORMAL_CLOSURE = 1006
-
+  private socketOptions: Required<SocketOptions>
   private socket: WebSocket
-  private debug: typeof console['debug']
-
-  private options: Required<SocketOptions>
-  private reconnectInterval: number
-  private reconnectAttempt = 0
   private isClosed = false
-  private isFirst = true
+  private eventHandlers: SocketEventHandlers<SocketMessage>
 
-  constructor(options: SocketOptions) {
-    this.options = {
-      ...defaultOptions,
-      ...options,
-    }
-    this.reconnectInterval = this.options.minReconnectInterval
-    this.debug = this.options.debug ? console.debug.bind(console) : noop
-    this.socket = this.start()
-    this.addEventListener('open', () => {
-      this.debug('socket open')
-      if (this.isFirst) {
-        this.isFirst = false
-      } else {
-        this.debug('socket reconnected')
-        this.emitEvent('reconnect')
-      }
-      this.reconnectInterval = this.options.minReconnectInterval
+  private reconnectAttempt = 0
+  private reconnectInterval: number
+
+  constructor(options: SocketClientOptions<SocketMessage>) {
+    this.socketOptions = { ...defaultOptions, ...options.socketOptions }
+    this.eventHandlers = options.eventHandlers
+    this.socket = this.connect()
+    this.reconnectInterval = this.socketOptions.minReconnectInterval
+  }
+
+  private connect() {
+    const socket = new WebSocket(this.socketOptions.wsUrl, 'web-redux')
+    socket.addEventListener('open', () => {
       this.reconnectAttempt = 0
-      if (this.outgoingBuffer.length === 0) return
-      this.debug(
-        'flush socket message buffer. buffer size:',
-        this.outgoingBuffer.length,
-      )
-      this.outgoingBuffer.forEach((data) => this.socket.send(data))
-      this.outgoingBuffer = []
+      this.reconnectInterval = this.socketOptions.minReconnectInterval
+      this.eventHandlers.onSocketOpen()
     })
-    this.addEventListener('close', (ev) => {
-      if (!this.isClosed && ev.code === SocketClient.ABNORMAL_CLOSURE) {
+    socket.addEventListener('message', (event) => {
+      const message: SocketMessage = JSON.parse(String(event.data))
+      this.eventHandlers.onSocketMessage(message)
+    })
+    socket.addEventListener('close', (event) => {
+      this.eventHandlers.onSocketClose()
+      if (!this.isClosed) {
         this.reconnect()
       }
     })
-  }
-
-  private emitEvent(eventType: string) {
-    let event = new Event(eventType)
-    this.eventListenerList.forEach(([type, listener]) => {
-      if (type === eventType) {
-        listener(event)
-      }
-    })
+    return socket
   }
 
   private reconnect() {
-    if (this.reconnectAttempt >= this.options.maxReconnectAttempt) {
+    if (this.reconnectAttempt >= this.socketOptions.maxReconnectAttempt) {
       this.isClosed = true
       return
     }
     this.reconnectAttempt++
     let interval = this.reconnectInterval
     let variant =
-      interval * Math.random() * this.options.reconnectIntervalVariant
+      interval * Math.random() * this.socketOptions.reconnectIntervalVariant
     let sign = Math.random() * 2 - 1
     interval += variant * sign
-    interval = Math.min(interval, this.options.maxReconnectAttempt)
-    interval = Math.max(interval, this.options.minReconnectInterval)
-    setTimeout(() => {
-      this.socket = this.start()
-    }, interval)
-    interval *= this.options.reconnectIntervalFactor
+    interval = Math.min(interval, this.socketOptions.maxReconnectInterval)
+    interval = Math.max(interval, this.socketOptions.minReconnectInterval)
+    setTimeout(() => (this.socket = this.connect()), interval)
+    this.reconnectInterval *= this.socketOptions.reconnectIntervalBackOffFactor
   }
 
-  private start() {
-    this.debug('start WebSocket, url:', this.options.url)
-    let socket = new WebSocket(this.options.url)
-    this.eventListenerList.forEach(([type, listener, options]) => {
-      socket.addEventListener(type, listener, options)
-    })
-    return socket
-  }
-
-  private eventListenerList: Array<[EventType, EventListener, EventOptions]> =
-    []
-  addEventListener: WebSocket['addEventListener'] = (
-    type: EventType,
-    listener: EventListener,
-    options: EventOptions,
-  ) => {
-    this.socket.addEventListener(type, listener, options)
-    this.eventListenerList.push([type, listener, options])
-  }
-  removeEventListener: WebSocket['removeEventListener'] = (
-    type: EventType,
-    listener: EventListener,
-    options: EventOptions,
-  ) => {
-    this.socket.removeEventListener(type, listener, options)
-    this.eventListenerList = this.eventListenerList.filter(
-      (item) => item[0] !== type && item[1] !== listener,
-    )
-  }
-
-  private outgoingBuffer: string[] = []
-
-  sendMessage(message: SocketMessage) {
-    if (this.isClosed) {
-      throw new Error('socket already closed, cannot send further message')
-    }
-    let data = JSON.stringify(message)
-    if (this.socket.readyState === this.socket.OPEN) {
-      this.socket.send(data)
-    } else {
-      this.outgoingBuffer.push(data)
-      this.debug(
-        'socket not ready, save pending message to buffer. buffer size:',
-        this.outgoingBuffer.length,
-      )
-    }
-  }
-
-  close: WebSocket['close'] = (code, reason) => {
+  close(code?: number, reason?: string) {
     this.isClosed = true
     this.socket.close(code, reason)
+    this.eventHandlers.onSocketClose()
+  }
+
+  send(data: string) {
+    this.socket.send(data)
   }
 }

@@ -1,16 +1,8 @@
 export enum SocketMessageType {
-  dispatch,
   subscribe,
   update,
   unsubscribe,
 }
-
-/* client or storage to server */
-export type DispatchMessage<ActionName = string, ActionOptions = unknown> = [
-  type: SocketMessageType.dispatch,
-  actionType: ActionName,
-  actionOptions: ActionOptions,
-]
 
 /* client to server */
 export type SubscribeMessage<
@@ -37,7 +29,6 @@ export type UnsubscribeMessage = [
 ]
 
 export type SocketMessage =
-  | DispatchMessage
   | SubscribeMessage
   | StateUpdateMessage
   | UnsubscribeMessage

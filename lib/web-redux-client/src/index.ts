@@ -1,3 +1,8 @@
-export { SocketClient, SocketOptions } from './socket-client'
-export { StoreClient } from './store-client'
-export * as react from './react'
+export {
+  SocketClient,
+  SocketClientOptions,
+  SocketEventHandlers,
+  SocketOptions,
+} from './socket-client'
+export { StoreClient, Unsubscribe } from './types'
+export { WebClient, WebClientOptions } from './web-client'
