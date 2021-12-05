@@ -9,8 +9,8 @@ import type {
 
 export class StoreServer<
   AppState,
-  AppReducerDict extends ReducerDict<AppState, any, any, any>,
   AppSelectorDict extends SelectorDict<AppState, any, any, any>,
+  AppReducerDict extends ReducerDict<AppState, any, any, any>,
 > {
   private state: AppState
   private subscriptionSet = new Set<{
@@ -21,8 +21,8 @@ export class StoreServer<
 
   constructor(
     initialState: () => AppState,
-    public reducerDict: AppReducerDict,
     public selectorDict: AppSelectorDict,
+    public reducerDict: AppReducerDict,
   ) {
     this.state = initialState()
   }

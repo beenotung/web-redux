@@ -2,11 +2,13 @@ type Callback<T> = (data: T) => void
 
 export interface SocketOptions {
   wsUrl: string
+  timeoutInterval?: number // default 10000
   minReconnectInterval?: number // default 500
   maxReconnectInterval?: number // default 5000
   maxReconnectAttempt?: number // default unlimited
   reconnectIntervalBackOffFactor?: number // default 2
   reconnectIntervalVariant?: number // default 0.3
+  debug?: boolean
 }
 
 export interface SocketEventHandlers<SocketMessage> {
@@ -24,11 +26,13 @@ const defaultOptions: Omit<
   Required<SocketOptions>,
   'wsUrl' | 'onMessage' | 'onOpen' | 'onClose'
 > = {
+  timeoutInterval: 10000,
   minReconnectInterval: 500,
   maxReconnectInterval: 5000,
   maxReconnectAttempt: Number.POSITIVE_INFINITY,
   reconnectIntervalBackOffFactor: 2,
   reconnectIntervalVariant: 0.3,
+  debug: false,
 }
 
 export class SocketClient<SocketMessage> {
@@ -49,8 +53,17 @@ export class SocketClient<SocketMessage> {
   }
 
   private connect() {
+    if (this.socketOptions.debug) {
+      console.debug('connecting websocket', this.socketOptions.wsUrl)
+    }
     const socket = new WebSocket(this.socketOptions.wsUrl, 'web-redux')
+    let hasTimeout = false
     socket.addEventListener('open', () => {
+      clearTimeout(timeoutTimer)
+      if (hasTimeout) {
+        socket.close()
+        return
+      }
       this.reconnectAttempt = 0
       this.reconnectInterval = this.socketOptions.minReconnectInterval
       this.eventHandlers.onSocketOpen()
@@ -60,16 +73,31 @@ export class SocketClient<SocketMessage> {
       this.eventHandlers.onSocketMessage(message)
     })
     socket.addEventListener('close', (event) => {
+      if (hasTimeout) return
       this.eventHandlers.onSocketClose()
       if (!this.isClosed) {
         this.reconnect()
       }
     })
+    const timeoutTimer = setTimeout(() => {
+      if (this.socketOptions.debug) {
+        console.debug('websocket connection timeout')
+      }
+      hasTimeout = true
+      this.reconnect()
+    }, this.socketOptions.timeoutInterval)
     return socket
   }
 
   private reconnect() {
     if (this.reconnectAttempt >= this.socketOptions.maxReconnectAttempt) {
+      if (this.socketOptions.debug) {
+        console.debug(
+          'give up websocket reconnection after',
+          this.reconnectAttempt,
+          'attempts',
+        )
+      }
       this.isClosed = true
       return
     }
@@ -81,6 +109,13 @@ export class SocketClient<SocketMessage> {
     interval += variant * sign
     interval = Math.min(interval, this.socketOptions.maxReconnectInterval)
     interval = Math.max(interval, this.socketOptions.minReconnectInterval)
+    if (this.socketOptions.debug) {
+      console.debug('reconnect websocket after', interval, 'ms')
+    }
+    if (!interval) {
+      console.debug('invalid reconnect interval')
+      debugger
+    }
     setTimeout(() => (this.socket = this.connect()), interval)
     this.reconnectInterval *= this.socketOptions.reconnectIntervalBackOffFactor
   }
@@ -92,6 +127,8 @@ export class SocketClient<SocketMessage> {
   }
 
   send(data: string) {
-    this.socket.send(data)
+    if (this.socket.readyState === this.socket.OPEN) {
+      this.socket.send(data)
+    }
   }
 }

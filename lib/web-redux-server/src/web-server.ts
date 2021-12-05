@@ -16,21 +16,30 @@ import type {
 import type { StoreServer } from './store-server'
 import { SocketMessageType } from 'web-redux-core'
 
+export interface AttachWebServerOptions<
+  State,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+> {
+  store: StoreServer<State, AppSelectorDict, AppReducerDict>
+  app: express.Router
+  wss: ws.WebSocketServer
+  debug?: boolean
+}
+
 export function attachWebServer<
   State,
-  AppReducerDict extends ReducerDict<State, any, any, any>,
   AppSelectorDict extends SelectorDict<State, any, any, any>,
->(
-  store: StoreServer<State, AppReducerDict, AppSelectorDict>,
-  app: express.Router,
-  wss: ws.WebSocketServer,
-) {
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+>(options: AttachWebServerOptions<State, AppSelectorDict, AppReducerDict>) {
+  const { app, wss, store, debug } = options
   app.post('/dispatch/:type', (req, res) => {
     const actionName: keyof AppReducerDict = req.params.type
     const actionOptions: ExtractActionOptions<
       AppReducerDict,
       keyof AppReducerDict
     > = req.body
+    console.debug('post dispatch', { params: req.params, body: req.body })
     store.dispatch(actionName, actionOptions, (result) => res.json(result))
   })
   wss.on('connection', (ws) => {
@@ -64,9 +73,11 @@ export function attachWebServer<
           break
         }
         case SocketMessageType.update: {
-          console.debug(
-            "Shouldn't receive update message from client. This should only be sent from server to client.",
-          )
+          if (debug) {
+            console.debug(
+              "Shouldn't receive update message from client. This should only be sent from server to client.",
+            )
+          }
           break
         }
         case SocketMessageType.unsubscribe: {
@@ -81,7 +92,9 @@ export function attachWebServer<
         }
         default: {
           const msg: never = message
-          console.debug('received unknown socket message:', msg)
+          if (debug) {
+            console.debug('received unknown socket message:', msg)
+          }
         }
       }
     })

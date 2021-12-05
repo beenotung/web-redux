@@ -1,3 +1,4 @@
+export * from 'web-redux-core/dist/types'
 export {
   SocketClient,
   SocketClientOptions,

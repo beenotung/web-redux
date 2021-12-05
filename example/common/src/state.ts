@@ -1,6 +1,6 @@
 import { Dict, Collection, ObjectDict } from 'live-data-sync'
 
-export type RootState = {
+export type AppState = {
   collection: Collection<CollectionData>
   dict: Dict<DictData>
   item_count: number

@@ -1,4 +1,4 @@
-import { Item, RootState } from './state'
+import { Item, AppState } from './state'
 import {
   makeSyncComputeCacheByOptions,
   makeSyncComputeCacheByArguments,
@@ -8,7 +8,7 @@ import { Callback } from 'web-redux-core'
 const MaxItemPerPage = 20
 
 let selectItemList = (
-  items: RootState['collection']['data']['items'],
+  items: AppState['collection']['data']['items'],
   offset: number,
   count: number,
 ): Item[] => {
@@ -17,7 +17,7 @@ let selectItemList = (
 
 export let selector_dict = {
   item_list(
-    state: RootState,
+    state: AppState,
     options: { offset?: number; count?: number },
     callback: Callback<Item[]>,
   ): void {
@@ -30,9 +30,9 @@ export let selector_dict = {
     compute(items, offset, count)
   },
 
-  item_count(state: RootState, options: {}, callback: Callback<number>): void {
+  item_count(state: AppState, options: {}, callback: Callback<number>): void {
     callback(state.item_count)
   },
 }
 
-export type SelectorDict = typeof selector_dict
+export type AppSelectorDict = typeof selector_dict

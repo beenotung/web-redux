@@ -3,10 +3,22 @@ import ReactDOM from 'react-dom'
 import './index.css'
 import App from './App'
 import reportWebVitals from './reportWebVitals'
+import { StoreProvider } from 'web-redux-client/dist/react'
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <StoreProvider
+      options={{
+        baseUrl: 'http://localhost:8100',
+        socketOptions: {
+          wsUrl: 'ws://localhost:8100',
+          debug: true,
+        },
+        debug: true,
+      }}
+    >
+      <App />
+    </StoreProvider>
   </React.StrictMode>,
   document.getElementById('root'),
 )

@@ -9,23 +9,67 @@ import type { Dispatch, StoreClient } from '../types'
 import { WebClient } from '../web-client'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-export const StoreContext = createContext<StoreClient<any, any, any> | null>(
-  null,
-)
+export interface StoreContextValue<
+  State,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+> {
+  store: StoreClient<State, AppSelectorDict, AppReducerDict>
+  socketStatus: SocketStatus
+}
+
+export type SocketStatus = 'open' | 'close'
+
+export const StoreContext = createContext<StoreContextValue<
+  any,
+  any,
+  any
+> | null>(null)
 
 export function StoreProvider<
   State,
   AppSelectorDict extends SelectorDict<State, any, any, any>,
   AppReducerDict extends ReducerDict<State, any, any, any>,
->(props: { children: JSX.Element; options: WebClientOptions }) {
+>(props: {
+  children: JSX.Element
+  options: Omit<WebClientOptions, 'onSocketOpen' | 'onSocketClose'>
+}) {
   const { children, options } = props
+  const [socketStatus, setSocketStatus] = useState<SocketStatus>('close')
   const store = useMemo(
     (): StoreClient<State, AppSelectorDict, AppReducerDict> =>
-      new WebClient<State, AppSelectorDict, AppReducerDict>(options),
+      new WebClient<State, AppSelectorDict, AppReducerDict>({
+        ...options,
+        onSocketOpen: () => setSocketStatus('open'),
+        onSocketClose: () => setSocketStatus('close'),
+      }),
     [options],
   )
   useEffect(() => () => store.close(), [store])
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
+  return (
+    <StoreContext.Provider
+      value={{
+        store,
+        socketStatus,
+      }}
+    >
+      {children}
+    </StoreContext.Provider>
+  )
+}
+
+export function useStoreContext<
+  State,
+  AppSelectorDict extends SelectorDict<State, any, any, any>,
+  AppReducerDict extends ReducerDict<State, any, any, any>,
+>(): StoreContextValue<State, AppSelectorDict, AppReducerDict> {
+  const context = useContext(StoreContext)
+  if (!context) {
+    throw new ReferenceError(
+      'StoreContext is not initialized. You should the component inside <StoreProvider></StoreProvider> or <StoreContext.Provider></StoreContext.Provider>',
+    )
+  }
+  return context
 }
 
 export function useStore<
@@ -33,15 +77,13 @@ export function useStore<
   AppSelectorDict extends SelectorDict<State, any, any, any>,
   AppReducerDict extends ReducerDict<State, any, any, any>,
 >(): StoreClient<State, AppSelectorDict, AppReducerDict> {
-  const store = useContext(StoreContext)
+  const context = useStoreContext()
+  return context.store
+}
 
-  if (!store) {
-    throw new ReferenceError(
-      'Store is not defined in context. You should wrap the component inside <StoreProvider options={options}> or <StoreContext.Provider value={store}>',
-    )
-  }
-
-  return store
+export function useSocketStatus(): SocketStatus {
+  const context = useStoreContext()
+  return context.socketStatus
 }
 
 export function useDispatch<

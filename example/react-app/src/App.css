@@ -44,13 +44,31 @@
   }
 }
 
-.Todo-list {
+.error-message {
+  color: pink;
 }
 
-.Todo-item button {
+.error-message {
+  margin: 0.25em;
+}
+
+.Todo-list {
+  margin-top: 1em;
+}
+
+.App input,
+.App button {
   margin: 0 0.25em;
   padding: 0.25em;
   font-weight: bolder;
+}
+
+.Pagination {
+  margin-bottom: 0.5em;
+}
+
+.Todo-item {
+  margin-bottom: 0.25em;
 }
 
 .Todo-count,
