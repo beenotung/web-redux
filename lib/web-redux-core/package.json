@@ -25,6 +25,9 @@
     "url": "https://beeno-tung.surge.sh"
   },
   "license": "BSD-2-Clause",
+  "dependencies": {
+    "cache-compute": "^1.0.1"
+  },
   "devDependencies": {
     "@types/node": "^16.11.1",
     "rimraf": "^3.0.2",
@@ -37,8 +40,5 @@
   "bugs": {
     "url": "https://github.com/beenotung/web-redux/issues"
   },
-  "homepage": "https://github.com/beenotung/web-redux/tree/master/lib/web-redux-core#readme",
-  "dependencies": {
-    "cache-compute": "^1.0.1"
-  }
+  "homepage": "https://github.com/beenotung/web-redux/tree/master/lib/web-redux-core#readme"
 }
