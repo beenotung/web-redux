@@ -24,6 +24,6 @@
   },
   "dependencies": {
     "live-state.ts": "^0.0.0",
-    "web-redux-core": "^1.0.1"
+    "web-redux-core": "^2.0.0"
   }
 }
