@@ -7,6 +7,7 @@
     "sourceMap": true,
     "target": "ES6",
     "module": "commonjs",
+    "skipLibCheck": true,
     "outDir": "dist"
   }
 }
