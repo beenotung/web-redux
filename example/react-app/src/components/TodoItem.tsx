@@ -1,6 +1,8 @@
 import type { AppReducerDict, AppState, Item } from 'common'
 import { useDispatch } from 'web-redux-client/dist/react'
 import React, { useState, useCallback, FormEvent } from 'react'
+import { useEvent } from 'react-use-event'
+import { PinTodoItemEvent } from '../events/PinTodoItemEvent'
 
 function autoFocus(element: HTMLInputElement | null) {
   element?.focus()
@@ -28,11 +30,14 @@ export function TodoItem(props: { item: Item }) {
     setEditText(text)
     handleError(dispatch('renameItem', { id, text }))
   }, [])
+  const dispatchPinEvent = useEvent<PinTodoItemEvent>('PinTodoItem')
+  const pinEvent = () => dispatchPinEvent({ id })
   return (
     <div key={id} className="Todo-item">
       <button onClick={() => handleError(dispatch('deleteItem', { id }))}>
         Delete
       </button>
+      <button onClick={pinEvent}>Pin</button>
       <button onClick={() => handleError(dispatch('tickItem', { id }))}>
         Tick
       </button>

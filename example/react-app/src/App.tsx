@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSocketStatus } from 'web-redux-client/dist/react'
 import './App.css'
+import { DetailPage } from './components/DetailPage'
 import { TodoList } from './components/TodoList'
 
 function App() {
@@ -29,7 +30,10 @@ function App() {
           </a>
         </div>
         {socketStatus === 'open' ? (
-          <TodoList />
+          <>
+            <TodoList />
+            <DetailPage />
+          </>
         ) : (
           <p>Connecting Web Socket...</p>
         )}
