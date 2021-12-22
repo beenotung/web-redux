@@ -18,7 +18,7 @@
     "express": "^4.17.1",
     "listening-on": "^2.0.2",
     "typestub-ws": "^8.2.3",
-    "web-redux-server": "file:../../lib/web-redux-server"
+    "web-redux-server": "^2.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",
