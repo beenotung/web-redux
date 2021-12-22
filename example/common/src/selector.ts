@@ -1,4 +1,4 @@
-import { makeSyncComputeCacheByArguments } from 'cache-compute'
+import { newComputeByArgumentsCachePool } from 'cache-compute'
 import { Callback } from 'web-redux-core'
 import { AppState, ID, Item } from './state'
 
@@ -12,29 +12,13 @@ const selectItemList = (
   console.log('select item list:', { offset, count })
   return Object.values(items).slice(offset, offset + count)
 }
-const selectItemListCache = newCache(selectItemList)
+const selectItemListCache = newComputeByArgumentsCachePool(selectItemList)
 
 const selectItemDetail = (item: Item): Item => {
   console.log('select item detail:', item)
   return item
 }
-const selectItemDetailCache = newCache(selectItemDetail)
-
-function newCache<F extends (...args: any[]) => any>(computeFn: F) {
-  const cache = new WeakMap<
-    Callback<ReturnType<F>>,
-    (...args: Parameters<F>) => void
-  >()
-  function cacheCompute(callback: Callback<ReturnType<F>>) {
-    let compute = cache.get(callback)
-    if (!compute) {
-      compute = makeSyncComputeCacheByArguments(computeFn, callback)
-      cache.set(callback, compute)
-    }
-    return compute
-  }
-  return cacheCompute
-}
+const selectItemDetailCache = newComputeByArgumentsCachePool(selectItemDetail)
 
 export let selector_dict = {
   item_list(
